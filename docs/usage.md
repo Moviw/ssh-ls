@@ -1,0 +1,66 @@
+# Usage
+
+## Keyboard controls
+
+| Key | Action |
+| --- | --- |
+| `j` / `k`, `↑` / `↓` | Move through hosts |
+| `Tab` / `Shift+Tab`, `←` / `→` | Change tab |
+| `Space` | Toggle favorite |
+| `/` | Search; `Esc` returns to navigation |
+| `s` | Sort menu |
+| `Enter` | Connect |
+| `a` / `e` / `c` / `Delete` | Add / edit / clone / delete or hide |
+| `m` | Reorder with `j` / `k` or arrows; `Esc` finishes |
+| `r` | Enter a remote command |
+| `i` | Reload sources |
+| `o` | Accent color, row spacing, ASCII borders |
+| `v` | Effective OpenSSH configuration, after confirmation |
+| `U` | Reset selected host's discovered-field overrides |
+| `H` | Restore hidden discovered hosts |
+| `d` | Details, including on narrow terminals |
+| `g` | Local diagnostics |
+| `?` | Help |
+| `q` | Quit |
+
+Shortcuts are inactive while editing text. Delete/hide and reset operations require confirmation. Production status is a manual flag, not something inferred from a hostname. Recent usage records connection attempts, not proof of successful authentication.
+
+## CLI
+
+```text
+ssh-ls [--config PATH] [--history PATH ...] [--no-history]
+       [--demo] [--doctor] [--ascii] [--version]
+```
+
+- `--config PATH`: use an alternate config, also passed to `ssh -F`.
+- `--history PATH`: choose a history file; repeat for several files.
+- `--no-history`: don't read shell history.
+- `--demo`: fictional hosts, in-memory state, no SSH execution.
+- `--doctor`: local checks without connecting.
+- `--ascii`: ASCII borders and indicators.
+
+## Config and history
+
+The picker discovers literal `Host` aliases and follows `Include` files. Wildcard patterns are not expanded into imaginary hosts. It does not evaluate `Match` conditions or implement OpenSSH's complete resolution rules. Native SSH resolves the selected alias at connection time, including options that the picker doesn't display.
+
+`v` runs `ssh -G` only after you confirm. Trusted SSH config matters: `Match exec` may execute local commands even during a configuration preview.
+
+History parsing supports simple connection arguments such as `-p`, `-l`, `-i`, `-J`, and `-F`, plus a small allowlist of `-o` settings. An omitted port stays omitted when launching SSH. The parser skips unsupported options, shell operators/substitutions, environment assignments, and cwd-dependent key/config paths. It never saves raw history lines or replays their remote commands. The `r` action is for a command you explicitly enter now; its syntax is interpreted by the remote shell.
+
+Deduplication is conservative. Exact matching alias references may be merged, but different usernames, ports, identities, or configs can remain separate. No DNS probes are used to guess whether two destinations are the same server.
+
+## Local state
+
+App-owned state lives at `${XDG_CONFIG_HOME:-~/.config}/ssh-ls/state.json`. Updates use a file lock and atomic replacement, keep a previous-state backup, and use private POSIX permissions. Corrupt state is reported rather than overwritten.
+
+Editing a discovered host creates an override, not a change to `.ssh/config`. Deleting a discovered host hides it; deleting a custom entry removes that entry. `U` resets discovered fields; `H` unhides source entries.
+
+An identity override adds `-i` arguments to native SSH. It does **not** remove `IdentityFile` entries in your SSH config; clearing the override leaves those native entries in effect. Advanced SSH options are passed to OpenSSH, so use options and configurations you trust.
+
+To remove the installed command:
+
+```sh
+uv tool uninstall ssh-ls
+```
+
+This leaves your local state and SSH files untouched.
