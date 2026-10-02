@@ -1,0 +1,23 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ssh-ls"
+version = "0.1.0"
+description = "A keyboard-first SSH host picker with config and history discovery"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{name = "Moviw"}]
+dependencies = ["textual>=6.0,<9"]
+
+[project.scripts]
+ssh-ls = "ssh_ls.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/Moviw/ssh-ls"
+Repository = "https://github.com/Moviw/ssh-ls"
+
+[tool.hatch.build.targets.wheel]
+packages = ["ssh_ls"]
