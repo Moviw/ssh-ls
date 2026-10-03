@@ -34,7 +34,7 @@ ssh-ls
 
 脚本用 [uv](https://docs.astral.sh/uv/) 创建独立环境；没装 uv 或 Python 时，会自动安装 uv 和下载 Python 3.11。不需要 sudo、Git，也不用提前装 Python。不会修改 shell 启动文件、SSH 配置或 ssh-ls 设置。如果命令目录不在 PATH 里，安装后会提示完整启动路径。
 
-更新时再运行同一条安装命令即可，安装来源是最新的 `main` 分支。想先检查脚本，可以下载后再执行：
+安装来源是最新稳定 GitHub Release。更新用 `ssh-ls update`，卸载用 `ssh-ls uninstall`。想先检查脚本，可以下载后再执行：
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/Moviw/ssh-ls/main/install.sh -o install.sh
@@ -42,12 +42,12 @@ less install.sh
 sh install.sh
 ```
 
-已经使用 uv 或 pipx 的话，原来的方式也保留，需要 Python 3.11+ 和 Git：
+已经使用 uv 或 pipx 的话，也可以安装相同的稳定发布包，需要 Python 3.11+：
 
 ```sh
-uv tool install git+https://github.com/Moviw/ssh-ls.git
+uv tool install https://github.com/Moviw/ssh-ls/releases/latest/download/ssh-ls.tar.gz
 # 或
-pipx install git+https://github.com/Moviw/ssh-ls.git
+pipx install https://github.com/Moviw/ssh-ls/releases/latest/download/ssh-ls.tar.gz
 ```
 
 ## 最常用的几个键
@@ -64,7 +64,9 @@ pipx install git+https://github.com/Moviw/ssh-ls.git
 
 默认打开 **Recent**。点击 **Settings** 或按 `o` 进入配置页，可以选择 Recent、Favorites 或 All 作为启动页，也能选择主题、调整强调色、行距和 ASCII 显示。
 
-主题默认是 Tokyo Night。也预置了 Dracula、Catppuccin Mocha、Nord、Gruvbox Dark、Rosé Pine、Minimal、Cyberpunk、Ocean 和 Retro。在 Settings 中选择即可预览，Save 保存，Esc 放弃预览。
+主题默认是 Tokyo Night。也预置了 Dracula、Catppuccin Mocha、Nord、Gruvbox Dark、Rosé Pine、Minimal、Cyberpunk、Ocean 和 Retro。在 Settings 的 **Themes** 标签页选择卡片即可预览，Save 保存，Esc 放弃预览。
+
+![主题画廊](docs/themes.svg)
 
 你也可以新增、编辑、复制、隐藏和手动排列主机，调整排序，明确输入一条远程命令，或更换强调色与行距。[完整快捷键与命令行选项 →](docs/usage.md)
 
@@ -81,3 +83,14 @@ pipx install git+https://github.com/Moviw/ssh-ls.git
 ## 参与开发
 
 欢迎报告问题和提交范围明确的 PR。请附上操作系统、Python 版本，以及可以复现问题的虚构配置或历史样例，不要提交私钥或真实 shell 历史。[开发说明 →](docs/development.md)
+
+## 更新和卸载
+
+```sh
+ssh-ls update
+ssh-ls uninstall
+```
+
+卸载需要确认，只移除应用，保留收藏、设置、SSH 文件、uv 和 Python。`--yes` 可跳过交互确认。内置命令只管理官方 uv 安装；pipx 和源码安装请使用原来的安装方式。
+
+正常启动时会在后台检查 GitHub 稳定版本；发现更新时显示版本和更新命令，不自动升级，离线静默，Demo 不联网。不发送 SSH 配置或历史。Settings 分为 General 和 Themes 两个标签页，主题画廊提供十套可预览的主题卡片，默认仍是 Tokyo Night。底栏新增 `o Settings`。

@@ -30,3 +30,9 @@ CI runs Python 3.11 and 3.14 on macOS and Ubuntu. Ubuntu jobs also run the nativ
 Keep changes focused and add a regression test when fixing behavior. Use fictional hostnames and temporary paths in tests, examples, screenshots, and issue reports. Don't add real host inventories, private keys, or shell history.
 
 The implementation has three boundaries: discovery reads source files, the service manages app-owned state, and the launcher hands control to OpenSSH. UI code should not make SSH connections itself.
+
+## Test releases
+
+This repository is currently a test project. PyPI and Homebrew distribution are not configured.
+
+Update the version in `pyproject.toml`, `ssh_ls/__init__.py`, and `uv.lock` together. After main passes CI, push a matching `vX.Y.Z` tag. CI verifies the tag matches the package version, reruns the test matrix, then publishes a stable GitHub Release with `ssh-ls.tar.gz`. The installer uses the latest stable asset; built-in updates pin the returned version. Release notes come from GitHub's generated notes.

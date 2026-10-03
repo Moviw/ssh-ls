@@ -15,7 +15,8 @@ from typing import Any
 from textual import on
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import Container, Horizontal, Vertical, VerticalScroll
+from textual.containers import Container, Grid, Horizontal, Vertical, VerticalScroll
+from textual.events import DescendantFocus
 from textual.screen import ModalScreen, Screen
 from textual.theme import Theme
 from textual.widgets import Button, Checkbox, Input, Label, Select, Static, TextArea
@@ -263,17 +264,35 @@ class SettingsScreen(Screen[dict[str, Any] | None]):
     BINDINGS = [Binding("escape", "cancel", "Cancel", priority=True)]
     CSS = """
     SettingsScreen { align: center middle; background: $ssh-bg; color: $ssh-fg; }
-    #settings-box { width: 68; max-width: 96%; height: 30; max-height: 96%; padding: 1 2; border: round $ssh-border; background: $ssh-bg; }
+    #settings-box { width: 104; max-width: 98%; height: 100%; max-height: 100%; padding: 1 2; border: round $ssh-border; background: $ssh-bg; }
     #settings-title { height: 1; color: $ssh-accent; text-style: bold; }
-    #settings-description { height: 2; color: $ssh-muted; }
+    #settings-description { height: 1; color: $ssh-muted; text-wrap: nowrap; text-overflow: ellipsis; }
     #settings-fields { height: 1fr; }
     #theme-preview { height: 2; padding: 0 1; margin-bottom: 0; background: $ssh-surface; }
     .settings-row { height: 3; }
-    .settings-label { width: 22; padding-top: 1; color: $ssh-muted; }
+    .settings-label { width: 20; padding-top: 1; color: $ssh-muted; }
+    SettingsScreen.compact .settings-label { width: 14; }
+    SettingsScreen.tiny .settings-label { width: 12; text-wrap: nowrap; text-overflow: ellipsis; }
+    SettingsScreen Select { width: 1fr; min-width: 0; }
+    SettingsScreen SelectCurrent { text-wrap: nowrap; text-overflow: ellipsis; }
+    #settings-tabs { height: 3; margin: 0 0 1 0; }
+    #settings-tabs Button { width: 16; margin-right: 1; }
+    #settings-tabs Button.active { color: $ssh-accent; text-style: bold; border-bottom: tall $ssh-accent; }
+    #theme-grid { grid-size: 3; grid-columns: 1fr 1fr 1fr; grid-gutter: 1 1; height: auto; padding: 1; }
+    #theme-grid Button { height: 6; min-width: 0; padding: 0 1; content-align: left middle; text-align: left; background: $ssh-surface; color: $ssh-fg; border: round $ssh-border; }
+    #theme-grid Button:focus { border: tall $ssh-accent; }
+    #theme-grid Button.selected-theme { border: round $ssh-accent; text-style: bold; }
+    SettingsScreen.compact #theme-grid { grid-size: 2; grid-columns: 1fr 1fr; }
+    SettingsScreen.tiny #theme-grid { grid-size: 1; grid-columns: 1fr; }
+    #general-pane, #themes-pane { height: auto; }
+    #themes-pane { display: none; }
+    SettingsScreen.show-themes #general-pane { display: none; }
+    SettingsScreen.show-themes #themes-pane { display: block; }
     #settings-actions { height: 3; align-horizontal: right; }
     #settings-actions Button { margin-left: 1; }
-    #settings-hint { height: 1; color: $ssh-muted; }
+    #settings-hint { height: 1; color: $ssh-muted; text-wrap: nowrap; text-overflow: ellipsis; }
     SettingsScreen SelectCurrent { background: $ssh-surface; color: $ssh-fg; border: tall $ssh-border; }
+    SettingsScreen SelectCurrent Static#label { height: 1; text-wrap: nowrap; text-overflow: ellipsis; }
     SettingsScreen SelectCurrent:focus { border: tall $ssh-accent; }
     SettingsScreen Checkbox { background: $ssh-surface; color: $ssh-fg; border: tall $ssh-border; }
     SettingsScreen Button { background: $ssh-surface; color: $ssh-fg; border: tall $ssh-border; }
@@ -282,32 +301,50 @@ class SettingsScreen(Screen[dict[str, Any] | None]):
     def __init__(self, settings: dict[str, Any]):
         super().__init__(); self.settings = settings
         self._selected_theme = settings.get("theme", DEFAULT_THEME)
+        self.active_pane = "General"
 
     def compose(self) -> ComposeResult:
         with Vertical(id="settings-box"):
             yield Static("Settings", id="settings-title")
             yield Static("Choose how ssh-ls opens and looks.", id="settings-description")
+            with Horizontal(id="settings-tabs"):
+                yield Button("General", id="settings-general", classes="active")
+                yield Button("Themes", id="settings-themes")
             with VerticalScroll(id="settings-fields"):
-                with Horizontal(classes="settings-row"):
-                    yield Label("Theme", classes="settings-label")
-                    yield Select([(p["label"], name) for name, p in THEMES.items()], value=self._selected_theme, id="setting-theme", allow_blank=False)
-                yield Static("", id="theme-preview")
-                with Horizontal(classes="settings-row"):
-                    yield Label("Start page", classes="settings-label")
-                    yield Select([(x, x) for x in ("Recent", "Favorites", "All")], value=self.settings.get("start_tab", "Recent"), id="setting-start-tab", allow_blank=False)
-                with Horizontal(classes="settings-row"):
-                    yield Label("Accent color", classes="settings-label")
-                    options = [("Theme default", "auto"), ("Blue", "#7aa2f7"), ("Purple", "#bb9af7"), ("Green", "#9ece6a"), ("Cyan", "#7dcfff"), ("Orange", "#e0af68"), ("Pink", "#f7768e")]
-                    accent = self.settings.get("accent", "auto")
-                    if accent not in [value for _, value in options]:
-                        options.append(("Custom " + accent, accent))
-                    yield Select(options, value=accent, id="setting-accent", allow_blank=False)
-                with Horizontal(classes="settings-row"):
-                    yield Label("Row spacing", classes="settings-label")
-                    yield Select([("Compact", 1), ("Comfortable", 3)], value=int(self.settings.get("row_height", 1)), id="setting-row-height", allow_blank=False)
-                with Horizontal(classes="settings-row"):
-                    yield Label("ASCII display", classes="settings-label")
-                    yield Checkbox("Plain borders", value=bool(self.settings.get("ascii", False)), id="setting-ascii")
+                with Vertical(id="general-pane"):
+                    yield Static("Theme colors", classes="settings-label")
+                    yield Static("", id="theme-preview")
+                    with Horizontal(classes="settings-row"):
+                        yield Label("Start page", classes="settings-label")
+                        yield Select([(x, x) for x in ("Recent", "Favorites", "All")], value=self.settings.get("start_tab", "Recent"), id="setting-start-tab", allow_blank=False)
+                    with Horizontal(classes="settings-row"):
+                        yield Label("Accent color", classes="settings-label")
+                        options = [("Theme default", "auto"), ("Blue", "#7aa2f7"), ("Purple", "#bb9af7"), ("Green", "#9ece6a"), ("Cyan", "#7dcfff"), ("Orange", "#e0af68"), ("Pink", "#f7768e")]
+                        accent = self.settings.get("accent", "auto")
+                        if accent not in [value for _, value in options]:
+                            options.append(("Custom " + accent, accent))
+                        yield Select(options, value=accent, id="setting-accent", allow_blank=False)
+                    with Horizontal(classes="settings-row"):
+                        yield Label("Row spacing", classes="settings-label")
+                        yield Select([("Compact", 1), ("Comfortable", 3)], value=int(self.settings.get("row_height", 1)), id="setting-row-height", allow_blank=False)
+                    with Horizontal(classes="settings-row"):
+                        yield Label("ASCII display", classes="settings-label")
+                        yield Checkbox("Plain borders", value=bool(self.settings.get("ascii", False)), id="setting-ascii")
+                with Vertical(id="themes-pane"):
+                    yield Static("Select a palette to preview it across ssh-ls. Save to keep it.", id="themes-description")
+                    with Grid(id="theme-grid"):
+                        ascii_display = bool(self.settings.get("ascii", False))
+                        for name, palette in THEMES.items():
+                            card = Text()
+                            card.append(palette["label"] + "\n", style="bold " + palette["fg"])
+                            card.append(("> " if ascii_display else "› ") + ("alice@tokyo" if name == "tokyo-night" else "deploy@" + name) + "\n", style=palette["accent"])
+                            card.append(("* Ready  " if ascii_display else "● Ready  "), style=palette["success"])
+                            card.append("! Warning", style=palette["warning"])
+                            button = Button(card, id=f"theme-{name}", classes="selected-theme" if name == self._selected_theme else "")
+                            button.styles.background = palette["surface"]
+                            button.styles.color = palette["fg"]
+                            button.styles.border = ("round", palette["accent"] if name == self._selected_theme else palette["border"])
+                            yield button
             with Horizontal(id="settings-actions"):
                 yield Button("Back", id="cancel")
                 yield Button("Save", id="save", variant="primary")
@@ -315,19 +352,68 @@ class SettingsScreen(Screen[dict[str, Any] | None]):
 
     def on_mount(self) -> None:
         self._preview_theme()
+        self._set_responsive(self.size.width)
 
-    @on(Select.Changed, "#setting-theme")
+    def _set_responsive(self, width: int) -> None:
+        self.set_class(width < 78, "compact")
+        self.set_class(width < 52, "tiny")
+
+    def on_resize(self, event) -> None:
+        self._set_responsive(event.size.width)
+
+    def on_key(self, event) -> None:
+        focused = self.app.focused
+        if not isinstance(focused, Button) or not focused.id or not focused.id.startswith("theme-"):
+            return
+        names = list(THEMES)
+        index = names.index(focused.id.removeprefix("theme-"))
+        columns = 1 if self.size.width < 52 else 2 if self.size.width < 78 else 3
+        delta = {"left": -1, "right": 1, "up": -columns, "down": columns}.get(event.key)
+        if delta is not None:
+            next_index = max(0, min(len(names) - 1, index + delta))
+            self.query_one(f"#theme-{names[next_index]}", Button).focus()
+            event.stop()
+            event.prevent_default()
+
+    def on_descendant_focus(self, event: DescendantFocus) -> None:
+        if isinstance(event.widget, Button) and event.widget.id and event.widget.id.startswith("theme-"):
+            self.query_one("#settings-fields", VerticalScroll).scroll_to_widget(event.widget, animate=False)
+
+    @on(Button.Pressed, "#settings-general, #settings-themes")
+    def pane_pressed(self, event: Button.Pressed) -> None:
+        self.active_pane = "Themes" if event.button.id == "settings-themes" else "General"
+        self.set_class(self.active_pane == "Themes", "show-themes")
+        self.query_one("#settings-general", Button).set_class(self.active_pane == "General", "active")
+        self.query_one("#settings-themes", Button).set_class(self.active_pane == "Themes", "active")
+
+    @on(Button.Pressed, "#theme-grid Button")
+    def theme_card_pressed(self, event: Button.Pressed) -> None:
+        self._select_theme(event.button.id.removeprefix("theme-"))
+
+    def _select_theme(self, name: str) -> None:
+        if name not in THEMES:
+            return
+        changed_theme = name != self._selected_theme
+        self._selected_theme = name
+        for theme_name in THEMES:
+            button = self.query_one(f"#theme-{theme_name}", Button)
+            button.set_class(name == theme_name, "selected-theme")
+            palette = THEMES[theme_name]
+            button.styles.background = palette["surface"]
+            button.styles.color = palette["fg"]
+            button.styles.border = ("round", palette["accent"] if name == theme_name else palette["border"])
+        if changed_theme:
+            self.query_one("#setting-accent", Select).value = "auto"
+        self._preview_theme()
+
     @on(Select.Changed, "#setting-accent")
     def preview_changed(self, event: Select.Changed) -> None:
         if not self.is_mounted or event.value is Select.BLANK:
             return
-        if event.select.id == "setting-theme" and event.value != self._selected_theme:
-            self._selected_theme = str(event.value)
-            self.query_one("#setting-accent", Select).value = "auto"
         self._preview_theme()
 
     def _preview_theme(self) -> None:
-        settings = {"theme": self.query_one("#setting-theme", Select).value,
+        settings = {"theme": self._selected_theme,
                     "accent": self.query_one("#setting-accent", Select).value}
         colors = get_palette(settings)
         self.app._use_theme(settings)
@@ -346,7 +432,7 @@ class SettingsScreen(Screen[dict[str, Any] | None]):
     def pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "cancel": self.dismiss(None)
         elif event.button.id == "save":
-            self.dismiss({"theme": self.query_one("#setting-theme", Select).value,
+            self.dismiss({"theme": self._selected_theme,
                           "start_tab": self.query_one("#setting-start-tab", Select).value,
                           "accent": self.query_one("#setting-accent", Select).value,
                           "row_height": self.query_one("#setting-row-height", Select).value,
@@ -386,6 +472,7 @@ class SSHApp(App[LaunchRequest | None]):
     CSS = """
     Screen { background: $ssh-bg; color: $ssh-fg; }
     #topline { height: 3; padding: 1; background: $ssh-surface; }
+    #update-banner { height: 1; display: none; padding: 0 1; color: $ssh-warning; background: $ssh-surface; text-wrap: nowrap; text-overflow: ellipsis; }
     #brand { width: 17; color: $ssh-accent; text-style: bold; padding-top: 0; }
     #tabs { width: 1fr; height: 1; }
     #tabs Button { width: 1fr; min-width: 10; height: 1; border: none; padding: 0; background: $ssh-surface; color: $ssh-muted; }
@@ -406,7 +493,7 @@ class SSHApp(App[LaunchRequest | None]):
     #status { height: 1; padding: 0 2; color: $ssh-warning; }
     #context { height: 3; padding: 1 2; background: $ssh-surface; color: $ssh-muted; }
     #footer-primary { width: 1fr; height: 1; text-wrap: nowrap; text-overflow: ellipsis; }
-    #footer-secondary { width: auto; height: 1; margin-left: 3; text-wrap: nowrap; }
+    #footer-secondary { width: auto; height: 1; margin-left: 1; text-wrap: nowrap; text-overflow: ellipsis; }
     .selected-row { background: $ssh-surface; color: $ssh-fg; text-style: bold; }
     .normal-row { color: $ssh-muted; }
     .host-line { height: 1; }
@@ -429,9 +516,11 @@ class SSHApp(App[LaunchRequest | None]):
     BINDINGS = [Binding("ctrl+c", "quit", "Quit", priority=True)]
     TABS = START_TABS
 
-    def __init__(self, service: Any):
+    def __init__(self, service: Any, *, check_updates: bool = False):
         super().__init__()
         self.service = service
+        self.check_updates = check_updates
+        self.available_update = None
         self.tab = getattr(service, "settings", {}).get("start_tab", "Recent")
         if self.tab not in self.TABS:
             self.tab = "Recent"
@@ -456,6 +545,7 @@ class SSHApp(App[LaunchRequest | None]):
                     yield Button(tab, id=f"tab-{index}", classes="active" if index == 0 else "")
             yield Input(placeholder="/ search hosts", id="search")
             yield Button("Settings", id="open-settings", tooltip="Preferences (o)")
+        yield Static("", id="update-banner")
         with Horizontal(id="main"):
             with Vertical(id="list-pane"):
                 yield Static("", id="list-caption")
@@ -474,6 +564,27 @@ class SSHApp(App[LaunchRequest | None]):
         self._nav_focus = True
         self._apply_settings_style()
         self._set_responsive(self.size.width)
+        if self.check_updates:
+            self.run_worker(self._check_for_updates, thread=True, exclusive=True, name="release-check")
+
+    def _check_for_updates(self) -> None:
+        """Check for a release off the UI thread; network errors never affect startup."""
+        try:
+            from . import __version__
+            from .lifecycle import available_update
+            release = available_update(current_version=__version__, timeout=2.0)
+            if release is not None:
+                self.call_from_thread(self._show_update, release.version)
+        except Exception:
+            # Update discovery is advisory and must never block host browsing.
+            return
+
+    def _show_update(self, version: str) -> None:
+        self.available_update = version
+        if self.is_mounted:
+            banner = self.query_one("#update-banner", Static)
+            banner.update(f"Update available: v{version} · ssh-ls update")
+            banner.display = True
 
     def push_screen(self, screen: Screen | str, callback=None, wait_for_dismiss: bool = False, *, mode: str | None = None):
         if isinstance(screen, Screen) and bool(getattr(self.service, "settings", {}).get("ascii", False)):
@@ -898,11 +1009,19 @@ class SSHApp(App[LaunchRequest | None]):
             primary = [hint("Enter", "Connect")]
             if self.size.width >= 50:
                 primary.append(hint("/", "Search"))
-            if self.size.width >= 85:
-                primary.append(hint("Space", "Star"))
-        secondary = [hint("?", "Help"), hint("q", "Quit")]
-        if self.size.width < 45:
-            secondary = [hint("?", "Help")]
+        if self.size.width >= 85:
+            primary.append(hint("Space", "Star"))
+        secondary = [hint("o", "Settings")]
+        if self.size.width >= 75:
+            secondary.extend([hint("?", "Help"), hint("q", "Quit")])
+        elif self.size.width >= 50:
+            secondary.append(hint("?", "Help"))
+        elif self.size.width >= 40:
+            primary = [hint("↵", "Connect"), hint("o", "Settings")]
+            secondary = []
+        else:
+            primary = [hint("o", "Settings")]
+            secondary = []
         self.query_one("#footer-primary", Static).update("   ".join(primary))
         self.query_one("#footer-secondary", Static).update("   ".join(secondary))
 

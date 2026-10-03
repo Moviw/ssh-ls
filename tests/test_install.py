@@ -113,7 +113,7 @@ exit 74
 
         self.assertEqual(result.returncode, 0, result.stderr)
         calls = self._install_log()
-        self.assertIn("uv tool install --upgrade --refresh --python 3.11 https://github.com/Moviw/ssh-ls/archive/refs/heads/main.tar.gz", calls)
+        self.assertIn("uv tool install --upgrade --refresh --python 3.11 https://github.com/Moviw/ssh-ls/releases/latest/download/ssh-ls.tar.gz", calls)
         self.assertIn("uv tool dir --bin", calls)
         self.assertIn("ssh-ls 9.8.7", result.stdout + result.stderr)
         self.assertNotIn("curl ", calls)

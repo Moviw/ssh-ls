@@ -214,12 +214,23 @@ class LayoutRegressionTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("Connect", str(primary.content))
             self.assertNotIn("Star", str(primary.content))
             self.assertIn("Help", str(secondary.content))
+            self.assertIn("Settings", str(primary.content) + str(secondary.content))
             await pilot.click("#open-settings")
             self.assertIsInstance(app.screen, SettingsScreen)
             self.assertLessEqual(app.screen.query_one("#save").region.bottom, 20)
             self.assertTrue(app.screen.query_one("#setting-start-tab").is_mounted)
             await pilot.press("escape")
             self.assertEqual(app.tab, "All")
+
+        for width in (32, 40, 60):
+            with self.subTest(width=width):
+                compact = SSHApp(FakeService(hosts()))
+                async with compact.run_test(size=(width, 20)) as pilot:
+                    primary = compact.query_one("#footer-primary")
+                    secondary = compact.query_one("#footer-secondary")
+                    self.assertIn("Settings", str(primary.content) + str(secondary.content))
+                    self.assertLessEqual(primary.region.right, width)
+                    self.assertLessEqual(secondary.region.right, width)
 
     async def test_sources_compressed_in_both_details_views(self):
         service = FakeService(hosts())

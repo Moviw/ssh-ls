@@ -34,7 +34,7 @@ ssh-ls
 
 The installer uses [uv](https://docs.astral.sh/uv/) to create an isolated environment. If needed, it installs uv and downloads Python 3.11. No sudo, Git, or preinstalled Python is required. It leaves your shell profiles, SSH files, and ssh-ls settings alone. If the command directory isn't on your PATH, it prints the full executable path.
 
-Run the same command again to update to the latest `main` branch. To inspect the script before running it:
+The installer uses the latest stable GitHub Release. Run `ssh-ls update` to update, or `ssh-ls uninstall` to remove the app after confirmation. Both keep your settings and SSH files. To inspect the script before running it:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/Moviw/ssh-ls/main/install.sh -o install.sh
@@ -42,12 +42,12 @@ less install.sh
 sh install.sh
 ```
 
-Already using uv or pipx? These still work with Python 3.11+ and Git:
+Already using uv or pipx? Install the same stable release with Python 3.11+:
 
 ```sh
-uv tool install git+https://github.com/Moviw/ssh-ls.git
+uv tool install https://github.com/Moviw/ssh-ls/releases/latest/download/ssh-ls.tar.gz
 # or
-pipx install git+https://github.com/Moviw/ssh-ls.git
+pipx install https://github.com/Moviw/ssh-ls/releases/latest/download/ssh-ls.tar.gz
 ```
 
 ## The keys you'll actually use
@@ -59,14 +59,19 @@ pipx install git+https://github.com/Moviw/ssh-ls.git
 | `Tab`, `←` / `→` | All · Recent · Favorites |
 | `Enter` | Connect |
 | `Space` | Toggle favorite |
+| `o` | Settings and theme gallery |
 | `?` | Show all shortcuts |
 | `q` | Quit |
 
 The picker opens on **Recent** by default. Click **Settings** or press `o` to choose Recent, Favorites, or All as your start page, pick a theme, and adjust accent color, row spacing, and ASCII display.
 
-Tokyo Night is the default. The theme picker also includes Dracula, Catppuccin Mocha, Nord, Gruvbox Dark, Rosé Pine, Minimal, Cyberpunk, Ocean, and Retro. Preview a theme in Settings, then Save to keep it; Esc discards the preview.
+Tokyo Night is the default. The **Themes** tab shows a preview card for each preset, including Dracula, Catppuccin Mocha, Nord, Gruvbox Dark, Rosé Pine, Minimal, Cyberpunk, Ocean, and Retro. Select a card to preview it, then Save to keep it; Esc discards the preview.
+
+![Theme gallery](docs/themes.svg)
 
 You can also add, edit, clone, hide, and reorder hosts; sort the list; run an explicit remote command; and adjust the accent color or row spacing. [Full controls and CLI options →](docs/usage.md)
+
+Interactive launches check GitHub for a newer stable release in the background. If one is available, a small banner shows the version and `ssh-ls update`. No automatic update, no SSH data sent, and no interruption when offline. Demo mode stays offline. Built-in update and uninstall support official uv installs; pipx and source installs use their own manager.
 
 ## A few things to know
 

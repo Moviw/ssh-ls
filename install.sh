@@ -30,7 +30,7 @@ fi
 printf 'Installing ssh-ls from github.com/Moviw/ssh-ls...\n'
 # The source archive avoids requiring Git or developer tools on a fresh Mac.
 "$uv_bin" tool install --upgrade --refresh --python 3.11 \
-    https://github.com/Moviw/ssh-ls/archive/refs/heads/main.tar.gz
+    https://github.com/Moviw/ssh-ls/releases/latest/download/ssh-ls.tar.gz
 bin_dir=$("$uv_bin" tool dir --bin)
 "$bin_dir/ssh-ls" --version
 printf '\nInstalled: %s/ssh-ls\n' "$bin_dir"
@@ -39,4 +39,4 @@ case ":${PATH:-}:" in
     *":$bin_dir:"*) printf 'Run: ssh-ls\n' ;;
     *) printf 'Run directly: "%s/ssh-ls"\nAdd "%s" to your shell PATH to use ssh-ls by name.\n' "$bin_dir" "$bin_dir" ;;
 esac
-printf 'To update, run this installer again. Your SSH files and ssh-ls settings are unchanged.\n'
+printf 'To update: ssh-ls update. To uninstall: ssh-ls uninstall. Your SSH files and ssh-ls settings are unchanged.\n'

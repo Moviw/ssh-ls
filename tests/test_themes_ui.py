@@ -23,9 +23,11 @@ class ThemePilotTests(unittest.IsolatedAsyncioTestCase):
                 with self.subTest(theme=name):
                     await pilot.press("o")
                     self.assertIsInstance(app.screen, SettingsScreen)
-                    theme_select = app.screen.query_one("#setting-theme")
-                    self.assertIn(name, [value for _, value in theme_select._options])
-                    theme_select.value = name
+                    await pilot.click("#settings-themes")
+                    card = app.screen.query_one(f"#theme-{name}")
+                    self.assertLessEqual(card.region.right, 100)
+                    card.focus()
+                    await pilot.press("enter")
                     await pilot.pause()
                     await pilot.click("#save")
                     await pilot.pause()
@@ -63,8 +65,9 @@ class ThemePilotTests(unittest.IsolatedAsyncioTestCase):
             async with app.run_test(size=(90, 28)) as pilot:
                 original = dict(app._palette)
                 await pilot.press("o")
-                select = app.screen.query_one("#setting-theme")
-                select.value = "dracula"
+                await pilot.click("#settings-themes")
+                app.screen.query_one("#theme-dracula").focus()
+                await pilot.press("enter")
                 await pilot.pause()
                 self.assertEqual(app._palette["bg"], THEMES["dracula"]["bg"])
                 self.assertEqual(app.get_theme(app.theme).background.lower(), THEMES["dracula"]["bg"])
@@ -76,7 +79,9 @@ class ThemePilotTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual([h.id for h in service.hosts], ["custom:fictional"])
 
                 await pilot.press("o")
-                app.screen.query_one("#setting-theme").value = "nord"
+                await pilot.click("#settings-themes")
+                app.screen.query_one("#theme-nord").focus()
+                await pilot.press("enter")
                 await pilot.pause()
                 await pilot.click("#cancel")
                 await pilot.pause()
@@ -93,7 +98,9 @@ class ThemePilotTests(unittest.IsolatedAsyncioTestCase):
             app = SSHApp(service)
             async with app.run_test(size=(90, 28)) as pilot:
                 await pilot.press("o")
-                app.screen.query_one("#setting-theme").value = "ocean"
+                await pilot.click("#settings-themes")
+                app.screen.query_one("#theme-ocean").focus()
+                await pilot.press("enter")
                 await pilot.pause()
                 await pilot.click("#save")
                 await pilot.pause()
@@ -119,15 +126,16 @@ class ThemePilotTests(unittest.IsolatedAsyncioTestCase):
             await pilot.press("o")
             screen = app.screen
             self.assertIsInstance(screen, SettingsScreen)
-            theme = screen.query_one("#setting-theme")
             accent = screen.query_one("#setting-accent")
             self.assertEqual(accent.value, "#123abc")
-            theme.value = "retro"
+            await pilot.click("#settings-themes")
+            app.screen.query_one("#theme-retro").focus()
+            await pilot.press("enter")
             await pilot.pause()
             self.assertEqual(accent.value, "auto")
             self.assertEqual(app._palette["accent"], THEMES["retro"]["accent"])
 
-            for selector in ("#setting-theme", "#setting-accent", "#setting-start-tab"):
+            for selector in ("#theme-retro", "#setting-accent", "#setting-start-tab"):
                 widget = screen.query_one(selector)
                 self.assertLessEqual(widget.region.right, 60)
             self.assertLessEqual(screen.query_one("#save").region.bottom, 20)
@@ -141,6 +149,80 @@ class ThemePilotTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(app.get_theme(app.theme).background.lower(), THEMES["tokyo-night"]["bg"])
             self.assertEqual(app.screen.title_text, "Settings failed")
             self.assertIn("fixture write failure", str(app.screen.query_one("#message-body").content))
+
+    async def test_theme_gallery_adapts_and_all_cards_are_reachable(self):
+        app = SSHApp(Service(demo=True))
+        async with app.run_test(size=(42, 16)) as pilot:
+            await pilot.press("o")
+            await pilot.click("#settings-themes")
+            await pilot.pause()
+            self.assertTrue(app.screen.has_class("tiny"))
+            cards = app.screen.query("#theme-grid Button")
+            self.assertEqual(len(cards), 10)
+            self.assertTrue(all(card.region.right <= 42 for card in cards))
+            app.screen.query_one("#theme-tokyo-night").focus()
+            await pilot.press("down", "down", "down", "down", "down", "down", "down", "down", "down", "enter")
+            await pilot.pause()
+            self.assertEqual(app._palette, THEMES["retro"])
+            self.assertLessEqual(app.screen.query_one("#theme-retro").region.bottom, 16)
+            await pilot.click("#save")
+            self.assertEqual(app.service.settings["theme"], "retro")
+
+    async def test_general_settings_fit_at_forty_columns(self):
+        app = SSHApp(Service(demo=True))
+        async with app.run_test(size=(40, 24)) as pilot:
+            await pilot.press("o")
+            await pilot.pause()
+            screen = app.screen
+            self.assertTrue(screen.query_one("#settings-general").has_class("active"))
+            for selector in ("#setting-start-tab", "#setting-accent", "#setting-row-height"):
+                select = screen.query_one(selector)
+                current = screen.query_one(f"{selector} SelectCurrent")
+                self.assertLessEqual(select.region.right, 40)
+                self.assertLessEqual(current.region.right, 40)
+                self.assertEqual(current.styles.text_wrap, "nowrap")
+                self.assertEqual(current.query_one("#label").styles.text_wrap, "nowrap")
+            labels = screen.query(".settings-row .settings-label")
+            self.assertTrue(all(label.region.right <= 40 for label in labels))
+            await pilot.click("#settings-themes")
+            self.assertTrue(screen.query_one("#settings-themes").has_class("active"))
+            self.assertTrue(screen.query_one("#theme-grid").display)
+
+    async def test_custom_accent_resets_only_when_theme_changes(self):
+        service = Service(demo=True)
+        service.settings["accent"] = "#123abc"
+        app = SSHApp(service)
+        async with app.run_test(size=(80, 24)) as pilot:
+            await pilot.press("o")
+            await pilot.click("#settings-themes")
+            await pilot.click(f"#theme-{DEFAULT_THEME}")
+            self.assertEqual(app.screen.query_one("#setting-accent").value, "#123abc")
+            app.screen.query_one("#theme-dracula").focus()
+            await pilot.press("enter")
+            self.assertEqual(app.screen.query_one("#setting-accent").value, "auto")
+
+    async def test_update_banner_is_advisory_and_failure_is_silent(self):
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        from ssh_ls import __version__
+
+        service = Service(demo=True)
+        app = SSHApp(service, check_updates=True)
+        with patch("ssh_ls.lifecycle.available_update", return_value=SimpleNamespace(version="9.8.7")) as checker:
+            async with app.run_test(size=(48, 18)) as pilot:
+                await pilot.pause(0.1)
+                checker.assert_called_once_with(current_version=__version__, timeout=2.0)
+                banner = app.query_one("#update-banner")
+                self.assertTrue(banner.display)
+                self.assertEqual(str(banner.content), "Update available: v9.8.7 · ssh-ls update")
+                self.assertLessEqual(banner.region.right, 48)
+
+        failure_app = SSHApp(Service(demo=True), check_updates=True)
+        with patch("ssh_ls.lifecycle.available_update", side_effect=OSError("offline")):
+            async with failure_app.run_test(size=(48, 18)) as pilot:
+                await pilot.pause(0.1)
+                self.assertFalse(failure_app.query_one("#update-banner").display)
+                self.assertEqual(failure_app.status, "Ready")
 
 
 if __name__ == "__main__":

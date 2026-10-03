@@ -60,3 +60,32 @@ jobs:
 
       - name: Build package
         run: uv build
+
+  release:
+    name: Publish GitHub test release
+    if: startsWith(github.ref, 'refs/tags/v') && github.event_name == 'push'
+    needs: test-and-build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          python-version: "3.11"
+      - name: Verify tag and build release asset
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          uv run --no-project python - <<'PY'
+          import os, pathlib, tomllib
+          version = tomllib.loads(pathlib.Path('pyproject.toml').read_text())['project']['version']
+          assert os.environ['RELEASE_TAG'] == f'v{version}', 'Tag must match package version'
+          PY
+          uv build --sdist
+          cp dist/ssh_ls-*.tar.gz dist/ssh-ls.tar.gz
+      - name: Publish stable release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: gh release create "$RELEASE_TAG" dist/ssh-ls.tar.gz --verify-tag --latest --generate-notes

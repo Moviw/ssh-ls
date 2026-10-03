@@ -33,13 +33,15 @@ The default start page is Recent. Open the **Settings** page using its button or
 
 ### Themes
 
-Tokyo Night is the default. Settings includes 10 full dark palettes: Tokyo Night, Dracula, Catppuccin Mocha, Nord, Gruvbox Dark, Rosé Pine, Minimal, Cyberpunk, Ocean, and Retro. Choosing a theme previews its background, panels, text, borders, and status colors immediately. Save keeps the choice for future launches; Back or Esc restores the saved appearance without writing state.
+Tokyo Night is the default. Settings has separate **General** and **Themes** tabs. The Themes gallery shows ten selectable preview cards with fictional hosts; it adapts to terminal width and scrolls on smaller terminals. The palettes are: Tokyo Night, Dracula, Catppuccin Mocha, Nord, Gruvbox Dark, Rosé Pine, Minimal, Cyberpunk, Ocean, and Retro. Choosing a theme previews its background, panels, text, borders, and status colors immediately. Save keeps the choice for future launches; Back or Esc restores the saved appearance without writing state.
 
 Changing themes selects **Theme default** for the accent, so the preset's colors stay together. You can override the accent afterward. Older settings load as Tokyo Night without rewriting the state file; a previously chosen custom accent is kept. Theme changes don't touch favorites, SSH files, history, or connection behavior.
 
 The UI uses [Textual's native theme system](https://textual.textualize.io/guide/design/). Palettes adapt the named theme colors for this picker; Cyberpunk, Ocean, Minimal, and Retro are ssh-ls presets inspired by those styles.
 
 ![Settings page with startup and appearance preferences](settings.svg)
+
+![Theme gallery with preview cards](themes.svg)
 
 Source references are grouped by file and consecutive line range, such as `config:~/.ssh/config:44–49`. Nonconsecutive lines are kept separate, and provenance data stays unchanged.
 
@@ -48,6 +50,8 @@ Source references are grouped by file and consecutive line range, such as `confi
 ```text
 ssh-ls [--config PATH] [--history PATH ...] [--no-history]
        [--demo] [--doctor] [--ascii] [--version]
+ssh-ls update
+ssh-ls uninstall [--yes]
 ```
 
 - `--config PATH`: use an alternate config, also passed to `ssh -F`.
@@ -77,13 +81,13 @@ An identity override adds `-i` arguments to native SSH. It does **not** remove `
 
 ## Installation and updates
 
-The curl installer installs the latest `main` branch into a uv tool environment. It reuses uv on your PATH (or `~/.local/bin/uv`), and otherwise downloads the official [uv installer](https://docs.astral.sh/uv/reference/installer/) with shell-profile changes disabled. Python 3.11 is downloaded if needed. It doesn't connect to SSH hosts or access your config, history, or app state.
+The curl installer installs the latest stable GitHub Release into a uv tool environment. It reuses uv on your PATH (or `~/.local/bin/uv`), and otherwise downloads the official [uv installer](https://docs.astral.sh/uv/reference/installer/) with shell-profile changes disabled. Python 3.11 is downloaded if needed. It doesn't connect to SSH hosts or access your config, history, or app state.
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/Moviw/ssh-ls/main/install.sh | sh
 ```
 
-Rerun this command to update. It refreshes the source archive and upgrades dependencies; it does not install a numbered release or verify a project release signature. For a fixed revision, use uv with a Git commit instead of the moving `main` branch.
+Run `ssh-ls update` to check and install the latest stable release. Updates use a version-pinned release asset over HTTPS; no project release signature is verified. Each interactive launch checks public release metadata in a background worker (two-second timeout), without sending host names, config, or history. Offline failures are silent; available updates appear in a banner. Demo and doctor mode do not check. There is no automatic upgrade.
 
 The command normally lands in `~/.local/bin`. If that directory isn't on PATH, use the full path printed by the installer, or add the directory yourself. For bash/zsh with the default location:
 
@@ -96,7 +100,7 @@ Put that line in your shell's startup file if you want it to persist. Alternativ
 To remove the installed command:
 
 ```sh
-uv tool uninstall ssh-ls
+ssh-ls uninstall
 ```
 
-If uv isn't on PATH, run `~/.local/bin/uv tool uninstall ssh-ls`. Uninstalling ssh-ls leaves uv, any downloaded Python, your local state, and SSH files untouched.
+Uninstall asks for confirmation, defaulting to cancel. Use `ssh-ls uninstall --yes` for an explicit noninteractive removal. It leaves uv, Python, local state, and SSH files untouched. Built-in lifecycle commands manage only official uv installations. Use `pipx upgrade ssh-ls` / `pipx uninstall ssh-ls` for pipx; source installs use their original method. If the app command is unavailable, `uv tool uninstall ssh-ls` is the uv recovery command.
