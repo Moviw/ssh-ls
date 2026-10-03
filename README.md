@@ -24,8 +24,6 @@ Your existing OpenSSH setup still handles keys, agents, jump hosts, and authenti
 
 ![ssh-ls showing a searchable host list and connection details](docs/demo.svg)
 
-The screenshot uses fictional hosts. Run `ssh-ls --demo` after installing to try the picker without reading your SSH files, contacting servers, or saving changes.
-
 ## Install and connect
 
 Requires macOS or Linux, curl, and OpenSSH.
