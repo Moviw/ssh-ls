@@ -7,7 +7,7 @@
 [![CI](https://github.com/Moviw/ssh-ls/actions/workflows/ci.yml/badge.svg)](https://github.com/Moviw/ssh-ls/actions/workflows/ci.yml)
 [![MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-I didn't want to keep typing `ssh ...`. My SSH config and shell history already held the destinations—I wanted to pick one instead of remembering which alias or command to type.
+ssh-ls grew out of my research days in Nakayama Lab. Between four lab hosts (`share1`, `share2`, `share3`, and `cal1`) and two university supercomputers, I used SSH every day. I wanted to pick a host instead of typing commands or digging through history.
 
 ## Pick a host. Press Enter.
 
@@ -78,8 +78,4 @@ You can also add, edit, clone, hide, and reorder hosts; sort the list; run an ex
 
 Bug reports and small, focused pull requests are welcome. Include your OS, Python version, and a fictional config or history example that reproduces the problem—never private keys or real shell history. See the [development guide](docs/development.md).
 
-## Credits & license
-
-Inspired by [akinoiro/ssh-list](https://github.com/akinoiro/ssh-list), independently implemented in Python with [Textual](https://github.com/Textualize/textual). Visual references include [Tokyo Night](https://github.com/enkia/tokyo-night-vscode-theme), [awesome-tui-design](https://github.com/cola-runner/awesome-tui-design), and [Glyph](https://github.com/truffle-dev/glyph).
-
-[MIT](LICENSE).
+*Dedicated to my research days in Nakayama Lab.*

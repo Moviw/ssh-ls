@@ -7,7 +7,7 @@
 [![CI](https://github.com/Moviw/ssh-ls/actions/workflows/ci.yml/badge.svg)](https://github.com/Moviw/ssh-ls/actions/workflows/ci.yml)
 [![MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-我就是懒，不想每次自己打 `ssh ...`。连接信息明明已经在 `.ssh/config` 和历史记录里，我想直接选一台，不用再想该敲哪个别名、找哪条命令。
+ssh-ls 起于我在 Nakayama Lab 的科研时光。实验室有四台主机（`share1`、`share2`、`share3`、`cal1`），学校还有两台超算，SSH 是每天都要用的工具。我就是懒，想直接选一台，不用反复敲命令、翻历史记录。
 
 ## 选一台，按回车
 
@@ -78,8 +78,4 @@ pipx install git+https://github.com/Moviw/ssh-ls.git
 
 欢迎报告问题和提交范围明确的 PR。请附上操作系统、Python 版本，以及可以复现问题的虚构配置或历史样例，不要提交私钥或真实 shell 历史。[开发说明 →](docs/development.md)
 
-## 致谢与许可
-
-灵感来自 [akinoiro/ssh-list](https://github.com/akinoiro/ssh-list)，使用 Python 和 [Textual](https://github.com/Textualize/textual) 独立实现。视觉参考包括 [Tokyo Night](https://github.com/enkia/tokyo-night-vscode-theme)、[awesome-tui-design](https://github.com/cola-runner/awesome-tui-design) 和 [Glyph](https://github.com/truffle-dev/glyph)。
-
-[MIT](LICENSE)。
+*献给在 Nakayama Lab 度过的科研时光。*
