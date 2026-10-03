@@ -8,6 +8,8 @@ from __future__ import annotations
 import copy
 import shlex
 import uuid
+from pathlib import Path
+from rich.text import Text
 from typing import Any
 
 from textual import on
@@ -18,6 +20,7 @@ from textual.screen import ModalScreen, Screen
 from textual.widgets import Button, Checkbox, Input, Label, Select, Static, TextArea
 
 from .models import Host, LaunchRequest
+from .store import START_TABS
 
 
 THEME = {
@@ -41,6 +44,45 @@ def _source_label(host: Host) -> str:
     if getattr(host, "custom", False):
         labels.append("custom")
     return ", ".join(dict.fromkeys(labels)) or "configured"
+
+
+def compact_sources(sources: list[str], *, ascii: bool = False) -> str:
+    """Group line numbers per source file without losing gaps or provenance."""
+    groups: dict[tuple[str, str], set[int]] = {}
+    labels: list[str | tuple[str, str]] = []
+    for source in sources:
+        kind, separator, rest = source.partition(":")
+        path, colon, number = rest.rpartition(":")
+        if separator and colon and kind in {"config", "history"} and number.isdecimal():
+            key = (kind, path)
+            if key not in groups:
+                groups[key] = set()
+                labels.append(key)
+            groups[key].add(int(number))
+        elif source not in labels:
+            labels.append(source)
+    results = []
+    home = str(Path.home())
+    dash = "-" if ascii else "–"
+    for label in labels:
+        if isinstance(label, str):
+            results.append(label)
+            continue
+        kind, path = label
+        if path == home or path.startswith(home + "/"):
+            path = "~" + path[len(home):]
+        numbers = sorted(groups[label])
+        ranges = []
+        start = end = numbers[0]
+        for number in numbers[1:]:
+            if number == end + 1:
+                end = number
+            else:
+                ranges.append(str(start) if start == end else f"{start}{dash}{end}")
+                start = end = number
+        ranges.append(str(start) if start == end else f"{start}{dash}{end}")
+        results.append(f"{kind}:{path}:{', '.join(ranges)}")
+    return "\n".join(results) or "(unknown)"
 
 
 class FocusableStatic(Static):
@@ -222,34 +264,49 @@ class CommandScreen(ModalScreen[str | None]):
             self.app.push_screen(MessageScreen("Command required", "Enter an explicit remote command, or cancel."))
 
 
-class SettingsScreen(ModalScreen[dict[str, Any] | None]):
+class SettingsScreen(Screen[dict[str, Any] | None]):
     BINDINGS = [Binding("escape", "cancel", "Cancel", priority=True)]
     CSS = """
-    SettingsScreen { align: center middle; background: #1a1b26 70%; }
-    #settings-box { width: 62; max-width: 92%; height: auto; padding: 1 2; border: round #7aa2f7; background: #24283b; }
+    SettingsScreen { align: center middle; background: #1a1b26; color: #c0caf5; }
+    #settings-box { width: 68; max-width: 96%; height: 24; max-height: 96%; padding: 1 2; border: round #414868; background: #1a1b26; }
+    #settings-title { height: 1; color: #7aa2f7; text-style: bold; }
+    #settings-description { height: 2; color: #9aa5ce; }
+    #settings-fields { height: 1fr; }
     .settings-row { height: 3; }
-    .settings-label { width: 23; padding-top: 1; color: #9aa5ce; }
+    .settings-label { width: 22; padding-top: 1; color: #9aa5ce; }
     #settings-actions { height: 3; align-horizontal: right; }
     #settings-actions Button { margin-left: 1; }
+    #settings-hint { height: 1; color: #737aa2; }
+    SettingsScreen SelectCurrent { background: #24283b; color: #c0caf5; border: tall #414868; }
+    SettingsScreen SelectCurrent:focus { border: tall #7aa2f7; }
+    SettingsScreen Checkbox { background: #24283b; color: #c0caf5; border: tall #414868; }
+    SettingsScreen Button { background: #24283b; color: #c0caf5; border: tall #414868; }
+    SettingsScreen Button.-primary { background: #7aa2f7; color: #1a1b26; border: tall #7aa2f7; }
     """
     def __init__(self, settings: dict[str, Any]):
         super().__init__(); self.settings = settings
 
     def compose(self) -> ComposeResult:
         with Vertical(id="settings-box"):
-            yield Label("[b]Settings[/b]")
-            with Horizontal(classes="settings-row"):
-                yield Label("Accent color", classes="settings-label")
-                yield Select([(x.title(), color) for x, color in (("Blue", "#7aa2f7"), ("Purple", "#bb9af7"), ("Green", "#9ece6a"), ("Cyan", "#7dcfff"), ("Orange", "#e0af68"), ("Pink", "#f7768e"))], value=self.settings.get("accent", "#7aa2f7"), id="setting-accent", allow_blank=False)
-            with Horizontal(classes="settings-row"):
-                yield Label("Row height", classes="settings-label")
-                yield Select([("Compact (1)", 1), ("Comfortable (3)", 3)], value=int(self.settings.get("row_height", 1)), id="setting-row-height", allow_blank=False)
-            with Horizontal(classes="settings-row"):
-                yield Label("ASCII borders", classes="settings-label")
-                yield Checkbox("Use plain ASCII borders", value=bool(self.settings.get("ascii", False)), id="setting-ascii")
+            yield Static("Settings", id="settings-title")
+            yield Static("Choose how ssh-ls opens and looks.", id="settings-description")
+            with VerticalScroll(id="settings-fields"):
+                with Horizontal(classes="settings-row"):
+                    yield Label("Start page", classes="settings-label")
+                    yield Select([(x, x) for x in ("Recent", "Favorites", "All")], value=self.settings.get("start_tab", "Recent"), id="setting-start-tab", allow_blank=False)
+                with Horizontal(classes="settings-row"):
+                    yield Label("Accent color", classes="settings-label")
+                    yield Select([(x, color) for x, color in (("Blue", "#7aa2f7"), ("Purple", "#bb9af7"), ("Green", "#9ece6a"), ("Cyan", "#7dcfff"), ("Orange", "#e0af68"), ("Pink", "#f7768e"))], value=self.settings.get("accent", "#7aa2f7"), id="setting-accent", allow_blank=False)
+                with Horizontal(classes="settings-row"):
+                    yield Label("Row spacing", classes="settings-label")
+                    yield Select([("Compact", 1), ("Comfortable", 3)], value=int(self.settings.get("row_height", 1)), id="setting-row-height", allow_blank=False)
+                with Horizontal(classes="settings-row"):
+                    yield Label("ASCII display", classes="settings-label")
+                    yield Checkbox("Plain borders", value=bool(self.settings.get("ascii", False)), id="setting-ascii")
             with Horizontal(id="settings-actions"):
-                yield Button("Cancel", id="cancel")
-                yield Button("Save settings", id="save", variant="primary")
+                yield Button("Back", id="cancel")
+                yield Button("Save", id="save", variant="primary")
+            yield Static("Esc back   ·   Start page applies on next launch", id="settings-hint")
 
     def action_cancel(self) -> None: self.dismiss(None)
 
@@ -257,7 +314,8 @@ class SettingsScreen(ModalScreen[dict[str, Any] | None]):
     def pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "cancel": self.dismiss(None)
         elif event.button.id == "save":
-            self.dismiss({"accent": self.query_one("#setting-accent", Select).value,
+            self.dismiss({"start_tab": self.query_one("#setting-start-tab", Select).value,
+                          "accent": self.query_one("#setting-accent", Select).value,
                           "row_height": self.query_one("#setting-row-height", Select).value,
                           "ascii": self.query_one("#setting-ascii", Checkbox).value})
 
@@ -302,15 +360,20 @@ class SSHApp(App[LaunchRequest | None]):
     #tabs Button.active { color: #7aa2f7; text-style: bold; border-bottom: none; }
     #tabs Button.active:focus { border: none; border-bottom: none; }
     #search { width: 28; height: 1; padding: 0 1; border: none; background: #1a1b26; }
+    #open-settings { width: 12; min-width: 10; height: 1; text-wrap: nowrap; text-overflow: ellipsis; border: none; padding: 0 1; color: #9aa5ce; background: #24283b; }
+    #open-settings:focus { border: none; padding: 0 1; color: #7aa2f7; }
+    Screen.tiny #open-settings { width: 10; min-width: 10; padding: 0; }
     #main { height: 1fr; }
     #list-pane { width: 60%; min-width: 32; height: 1fr; border: round #414868; margin: 1 0 1 1; padding: 0 1; }
     #detail-pane { width: 40%; min-width: 30; height: 1fr; border: round #414868; margin: 1 1 1 0; padding: 1; }
-    #list-caption { height: 2; color: #9aa5ce; padding-top: 1; }
+    #list-caption { height: 3; color: #9aa5ce; padding-top: 1; }
     #host-scroll { height: 1fr; overflow-y: auto; }
     #host-list { height: auto; padding: 0 1; text-wrap: nowrap; text-overflow: ellipsis; }
     #details { height: 1fr; overflow-y: auto; }
     #status { height: 1; padding: 0 2; color: #e0af68; }
-    #context { height: 1; padding: 0 2; background: #24283b; color: #9aa5ce; }
+    #context { height: 3; padding: 1 2; background: #24283b; color: #9aa5ce; }
+    #footer-primary { width: 1fr; height: 1; text-wrap: nowrap; text-overflow: ellipsis; }
+    #footer-secondary { width: auto; height: 1; margin-left: 3; text-wrap: nowrap; }
     .selected-row { background: #24283b; color: #c0caf5; text-style: bold; }
     .normal-row { color: #9aa5ce; }
     .host-line { height: 1; }
@@ -331,13 +394,15 @@ class SSHApp(App[LaunchRequest | None]):
     Screen.ascii-borders #command-box, Screen.ascii-borders #settings-box, Screen.ascii-borders #sort-box { border: ascii #414868; }
     """
     BINDINGS = [Binding("ctrl+c", "quit", "Quit", priority=True)]
-    TABS = ("All", "Recent", "Favorites", "History")
+    TABS = START_TABS
     ACCENTS = {"blue": "#7aa2f7", "purple": "#bb9af7", "green": "#9ece6a", "cyan": "#7dcfff", "orange": "#e0af68", "pink": "#f7768e"}
 
     def __init__(self, service: Any):
         super().__init__()
         self.service = service
-        self.tab = "All"
+        self.tab = getattr(service, "settings", {}).get("start_tab", "Recent")
+        if self.tab not in self.TABS:
+            self.tab = "Recent"
         self.selected = 0
         self.search_text = ""
         self.result: LaunchRequest | None = None
@@ -357,6 +422,7 @@ class SSHApp(App[LaunchRequest | None]):
                 for index, tab in enumerate(self.TABS):
                     yield Button(tab, id=f"tab-{index}", classes="active" if index == 0 else "")
             yield Input(placeholder="/ search hosts", id="search")
+            yield Button("Settings", id="open-settings", tooltip="Preferences (o)")
         with Horizontal(id="main"):
             with Vertical(id="list-pane"):
                 yield Static("", id="list-caption")
@@ -365,7 +431,9 @@ class SSHApp(App[LaunchRequest | None]):
             with Vertical(id="detail-pane"):
                 yield Static("Select a host to see details.", id="details")
         yield Static("Ready", id="status")
-        yield Static("←→ tabs j/k hosts Enter connect / search ? help q quit", id="context")
+        with Horizontal(id="context"):
+            yield Static("", id="footer-primary")
+            yield Static("", id="footer-secondary")
 
     def on_mount(self) -> None:
         self._refresh()
@@ -388,12 +456,10 @@ class SSHApp(App[LaunchRequest | None]):
         previous_id = self._filtered[self.selected].id if self._filtered and self.selected < len(self._filtered) else None
         hosts = self._all_hosts()
         if self.tab == "Recent":
-            hosts = [h for h in hosts if getattr(h, "last_used", 0)]
+            hosts = [h for h in hosts if getattr(h, "last_used", 0) or h.history]
             hosts.sort(key=lambda h: getattr(h, "last_used", 0), reverse=True)
         elif self.tab == "Favorites":
             hosts = [h for h in hosts if getattr(h, "favorite", False)]
-        elif self.tab == "History":
-            hosts = [h for h in hosts if getattr(h, "history", False)]
         if self.tab != "Recent":
             if self.sort_mode == "name": hosts.sort(key=lambda h: h.label.casefold())
             elif self.sort_mode == "user": hosts.sort(key=lambda h: h.user.casefold())
@@ -413,26 +479,38 @@ class SSHApp(App[LaunchRequest | None]):
         warnings = getattr(self.service, "warnings", []) or []
         warning_badge = f"  [#e0af68]{'?' if self._ascii else '⚠'} {len(warnings)} warnings[/#e0af68]" if warnings else ""
         self.query_one("#list-caption", Static).update(f"[b]{self.tab}[/b]  [#9aa5ce]{len(hosts)} host{'s' if len(hosts) != 1 else ''}[/#9aa5ce]{warning_badge}")
+        description = {"All": "Configured, historical and custom hosts", "Recent": "Recently used across sources · newest first", "Favorites": "Your starred hosts"}[self.tab]
+        caption = self.query_one("#list-caption", Static)
+        caption.update(str(caption.content) + f"\n[#737aa2]{description}[/#737aa2]")
         rh = int(getattr(self.service, "settings", {}).get("row_height", 1) or 1)
-        lines: list[str] = []
+        lines: list[Text] = []
+        name_width = min(24, max((Text(host.label).cell_len for host in hosts), default=8))
+        self._ascii = bool(getattr(self.service, "settings", {}).get("ascii", False))
+        accent = str(getattr(self.service, "settings", {}).get("accent", "#7aa2f7"))
         for idx, host in enumerate(hosts):
             star = ("*" if self._ascii else "★") if getattr(host, "favorite", False) else " "
-            prod = " [#f7768e]PROD[/#f7768e]" if getattr(host, "production", False) else ""
-            source = _esc(_source_label(host))
-            identity = f"[b]{_esc(host.label)}[/b]  [#9aa5ce]{_esc(host.destination)}:{host.port}[/#9aa5ce]  [#9aa5ce]({source})[/#9aa5ce]{prod}"
-            if idx == self.selected:
-                line = f"[#7aa2f7]{'>' if self._ascii else '›'}[/#7aa2f7] [bold #c0caf5]{star} {identity}[/]"
-            else:
-                line = f"[#9aa5ce] {star} {identity} [/#9aa5ce]"
-            lines.extend([line] + ([""] * (rh - 1)))
+            cursor = (">" if self._ascii else "›") if idx == self.selected else " "
+            row = Text()
+            row.append(cursor + " ", style=accent)
+            row.append(star + " ", style="#e0af68" if host.favorite else "#9aa5ce")
+            name = Text(host.label, style="bold #c0caf5" if idx == self.selected else "#c0caf5")
+            name.truncate(name_width, overflow="ellipsis", pad=True)
+            row.append_text(name)
+            row.append("  " + host.destination + f":{host.port}", style="#9aa5ce")
+            row.append("  (" + _source_label(host) + ")", style="#737aa2")
+            if host.production:
+                row.append("  PROD", style="bold #f7768e")
+            lines.extend([row] + [Text("")] * (rh - 1))
         if not hosts:
-            lines = ["[#9aa5ce]No hosts in this view.[/#9aa5ce]", "", "[#9aa5ce]Press a to add a host, i to reload.[/#9aa5ce]"]
-        self.query_one("#host-list", Static).update("\n".join(lines))
+            hint = "Press ← for All; a to add a host." if self.tab == "Recent" else "Press a to add a host, i to reload."
+            lines = [Text("No hosts in this view.", style="#9aa5ce"), Text(""), Text(hint, style="#9aa5ce")]
+        self.query_one("#host-list", Static).update(Text("\n").join(lines))
         if hosts:
-            try: self.query_one("#host-scroll", VerticalScroll).scroll_to(y=self.selected, animate=False)
-            except Exception: pass
+            self.query_one("#host-scroll", VerticalScroll).scroll_to(y=self.selected * rh, animate=False)
         self._update_details()
         self.query_one("#status", Static).update(_esc(self.status))
+        self.query_one("#status", Static).display = self.status != "Ready"
+        self._update_footer()
         accent_value = str(getattr(self.service, "settings", {}).get("accent", "#7aa2f7"))
         accent = self.ACCENTS.get(accent_value, accent_value)
         for i, tab in enumerate(self.TABS):
@@ -455,7 +533,7 @@ class SSHApp(App[LaunchRequest | None]):
         declared.append("Config: " + (_esc(h.config_path) if h.config_path else "(not declared)"))
         declared.append("Extra SSH options: " + (_esc(" ".join(shlex.quote(str(x)) for x in h.extra_args)) if h.extra_args else "(none)"))
         declared.append(f"Production: {'yes — confirmation required' if h.production else 'no'}")
-        declared.append(f"Sources: {_esc(', '.join(h.sources) or '(unknown)')}")
+        declared.append(f"Sources: {_esc(compact_sources(h.sources, ascii=self._ascii))}")
         declared.append(f"Favorite: {'yes' if h.favorite else 'no'}  Uses: {h.uses}")
         try:
             argv = self.service.argv(h, command=None)
@@ -486,6 +564,8 @@ class SSHApp(App[LaunchRequest | None]):
         self.status = value
         if self.is_mounted:
             self.query_one("#status", Static).update(_esc(value))
+            self.query_one("#status", Static).display = value != "Ready"
+            self._update_footer()
 
     def _prompt(self, title: str, message: str, callback) -> None:
         self.push_screen(ConfirmScreen(title, message), callback)
@@ -561,7 +641,7 @@ class SSHApp(App[LaunchRequest | None]):
         self.selected = 0
         self._refresh()
 
-    @on(Button.Pressed, "#tab-0, #tab-1, #tab-2, #tab-3")
+    @on(Button.Pressed, "#tab-0, #tab-1, #tab-2")
     def tab_pressed(self, event: Button.Pressed) -> None:
         self.tab = self.TABS[int(event.button.id.split("-")[-1])]
         self.selected = 0; self._refresh()
@@ -642,6 +722,10 @@ class SSHApp(App[LaunchRequest | None]):
             self.selected = 0
             self._refresh()
             self._set_status(f"Sort: {self.sort_mode}")
+
+    @on(Button.Pressed, "#open-settings")
+    def settings_pressed(self) -> None:
+        self._settings()
 
     def _settings(self) -> None:
         settings = dict(getattr(self.service, "settings", {}) or {})
@@ -729,11 +813,11 @@ class SSHApp(App[LaunchRequest | None]):
             port_value = str(h.port) if getattr(h, "port_explicit", True) else f"{h.port} (SSH default / estimated)"
             body = (f"Declared hostname: {_esc(h.hostname)}\nUser: {_esc(h.user or '(default)')}\nPort: {port_value}\n"
                     f"Identity files: {_esc(', '.join(h.identities) or '(SSH default)')}\nJump host: {_esc(h.jump or '(none)')}\n"
-                    f"Production: {'yes — confirmation required' if h.production else 'no'}\nSources: {_esc(', '.join(h.sources))}")
+                    f"Production: {'yes — confirmation required' if h.production else 'no'}\nSources: {_esc(compact_sources(h.sources, ascii=self._ascii))}")
             self.push_screen(MessageScreen(f"Host details: {h.label}", body))
 
     def _help(self) -> None:
-        text = "[b]Navigation[/b]\nTab / Shift+Tab / ← / →  switch All, Recent, Favorites, History\nj / k  select host   •   /  search   •   Esc  return to navigation\nEnter  prepare SSH connection   •   r  enter explicit remote command\n\n[b]Host management[/b]\na add   e edit   c duplicate   x delete/hide (confirmation)\nSpace favorite   m reorder mode (j/k or ↑/↓, Esc finish)   i reload sources\ns sort   o settings   g local diagnostics\nv inspect effective SSH config (confirmation; Match exec can run local commands)\nd details on narrow screens   U reset overrides   H restore hidden   ? help   q quit\n\nShortcuts are inactive while editing text. Production launches always require confirmation."
+        text = "[b]Navigation[/b]\nTab / Shift+Tab / ← / →  switch All, Recent, Favorites\nj / k  select host   •   /  search   •   Esc  return to navigation\nEnter  prepare SSH connection   •   r  enter explicit remote command\n\n[b]Host management[/b]\na add   e edit   c duplicate   x delete/hide (confirmation)\nSpace favorite   m reorder mode (j/k or ↑/↓, Esc finish)   i reload sources\ns sort   o settings   g local diagnostics\nv inspect effective SSH config (confirmation; Match exec can run local commands)\nd details on narrow screens   U reset overrides   H restore hidden   ? help   q quit\n\nShortcuts are inactive while editing text. Production launches always require confirmation."
         self.push_screen(MessageScreen("ssh-ls help", text))
 
     def _set_responsive(self, width: int) -> None:
@@ -750,13 +834,27 @@ class SSHApp(App[LaunchRequest | None]):
             self.screen.remove_class("tiny")
         if self.is_mounted:
             self.query_one("#tab-2", Button).label = "Favs" if width < 70 else "Favorites"
-            if width < 70:
-                footer = "←→ tabs j/k hosts Enter connect / search ? help q quit"
-            elif width < 100:
-                footer = "←/→ tabs j/k hosts Enter connect / search Space favorite ? help q quit"
-            else:
-                footer = "Tab/←→ views j/k select / search Enter connect a add e edit Space favorite r command ? help q quit"
-            self.query_one("#context", Static).update(footer)
+            self._update_footer()
+
+    def _update_footer(self) -> None:
+        if not self.is_mounted:
+            return
+        accent = str(getattr(self.service, "settings", {}).get("accent", "#7aa2f7"))
+        def hint(key: str, label: str) -> str:
+            return f"[bold {accent} on #2f334d] {key} [/]  [#c0caf5]{label}[/]"
+        if self._move_mode:
+            primary = [hint("j/k", "Move"), hint("Esc", "Done")]
+        else:
+            primary = [hint("Enter", "Connect")]
+            if self.size.width >= 50:
+                primary.append(hint("/", "Search"))
+            if self.size.width >= 85:
+                primary.append(hint("Space", "Star"))
+        secondary = [hint("?", "Help"), hint("q", "Quit")]
+        if self.size.width < 45:
+            secondary = [hint("?", "Help")]
+        self.query_one("#footer-primary", Static).update("   ".join(primary))
+        self.query_one("#footer-secondary", Static).update("   ".join(secondary))
 
     def on_resize(self, event) -> None:
         # At narrow widths details are deliberately not squeezed; d opens a readable modal.

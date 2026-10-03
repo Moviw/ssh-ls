@@ -13,14 +13,15 @@ The Catppuccin guide uses upstream named palette colors but its semantic mapping
 - Persistent two-column layout: searchable host rows on the left, selected-host details on the right.
 - Keep alias/name as the strongest row text; use smaller, quieter text for user, destination, port, recent use, and source status.
 - Keep host navigation and details visible together at wide widths. At a 100-column breakpoint, stack/collapse the detail area rather than squeezing aliases and connection metadata into unreadable columns.
-- Show four compact tabs: All, Recent, Favorites, History. Use one obvious active underline/accent and preserve selection while changing tabs where possible.
+- Show three compact tabs: All, Recent, Favorites. Open on Recent unless the user chooses another start page in Settings. Use one obvious active underline/accent and preserve selection while changing tabs where possible.
 - Avoid group/tag hierarchy. Sorting, search, favorite, recency, and history provenance provide enough organization for the intended lightweight picker.
 
 ## Focus and density
 
 - Selected list row uses a stable cursor mark and bold/high-contrast text; focused panel border and tab style reinforce keyboard focus.
 - Use thin single-line borders and moderate padding; keep dividers quieter than content.
-- Preserve a one-line status/shortcut footer. Contextual hints should not wrap; hide lower-priority hints on narrow terminals.
+- Give the shortcut strip two spaced regions: common actions on the left and Help/Quit on the right. Render keycaps separately from labels. Hide lower-priority actions at narrow widths; never wrap a binding.
+- Reserve fixed columns for cursor and favorite markers. Selection changes color and cursor only, never text alignment.
 - Prefer immediate state changes. Animate only meaningful asynchronous operations, such as a connectivity check.
 
 ## Palette roles
@@ -44,7 +45,7 @@ Do not encode state by color alone: pair status colors with labels/icons. Verify
 - `j`/`k` and arrows move the list; `Tab` and left/right change tabs.
 - `Space` toggles favorite; `/` starts search; `s` opens the sort menu.
 - `Enter` connects; `a`/`e`/`c`/`Delete` manage records. `m` enters reorder mode; move with `j`/`k` or arrows and finish with `Esc`.
-- `r` prompts for a remote command; `i` reloads config; `o` opens settings; `v` opens a confirmed `ssh -G` inspection; `g` runs local diagnostics; `?` opens help; `q` quits. `U` resets a host’s saved overrides and `H` restores hidden hosts.
+- `r` prompts for a remote command; `i` reloads config; `o` opens the Settings page; `v` opens a confirmed `ssh -G` inspection; `g` runs local diagnostics; `?` opens help; `q` quits. `U` resets a host’s saved overrides and `H` restores hidden hosts.
 - Keep the footer discoverable and contextual. A help view should list the same bindings as the footer and dialogs.
 - Destructive actions require explicit confirmation; show a short, specific action label with confirm/cancel keys.
 - Use brief, non-blocking toasts for success/error feedback, with semantic icon + text and expiry. Do not use a toast as the sole report of a consequential failure.

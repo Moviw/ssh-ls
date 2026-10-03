@@ -13,7 +13,7 @@ I didn't want to keep typing `ssh ...`. My SSH config and shell history already 
 
 Run `ssh-ls` to see hosts from your SSH config and supported commands in your bash or zsh history. Type `/` to search, move with `j` / `k` or the arrow keys, and press `Enter`. The picker closes and your system's `ssh` takes over. When the session ends, you're back at your shell.
 
-Star the hosts you use often. Switch to **Recent** when you want to reconnect, or **History** when you remember connecting but never saved a config entry. Config and history stay unchanged; ssh-ls keeps its own favorites and connection metadata.
+Star the hosts you use often. **Recent** combines connection attempts in ssh-ls with hosts found in your shell history, with known timestamps sorted newest first. Config and history stay unchanged; ssh-ls keeps its own favorites and connection metadata.
 
 Your existing OpenSSH setup still handles keys, agents, jump hosts, and authentication. ssh-ls is a host picker, not another SSH client or password vault.
 
@@ -44,11 +44,13 @@ pipx install git+https://github.com/Moviw/ssh-ls.git
 | --- | --- |
 | `/` | Search by name, host, user, or jump host |
 | `j` / `k`, `↑` / `↓` | Select a host |
-| `Tab`, `←` / `→` | All · Recent · Favorites · History |
+| `Tab`, `←` / `→` | All · Recent · Favorites |
 | `Enter` | Connect |
 | `Space` | Toggle favorite |
 | `?` | Show all shortcuts |
 | `q` | Quit |
+
+The picker opens on **Recent** by default. Click **Settings** or press `o` to choose Recent, Favorites, or All as your start page and adjust accent color, row spacing, and ASCII display.
 
 You can also add, edit, clone, hide, and reorder hosts; sort the list; run an explicit remote command; and adjust the accent color or row spacing. [Full controls and CLI options →](docs/usage.md)
 

@@ -16,6 +16,7 @@ from unittest.mock import patch
 from ssh_ls.cli import main
 from ssh_ls.models import LaunchRequest
 from ssh_ls.service import demo_hosts
+from ssh_ls.store import Store
 
 
 class CLITests(unittest.TestCase):
@@ -35,6 +36,7 @@ class CLITests(unittest.TestCase):
             fake_ssh = directory / "ssh"
             fake_ssh.write_text(f"#!{sys.executable}\nimport json,sys,termios\na=termios.tcgetattr(0)\nprint('SSH_LS_FAKE_TTY',int(bool(a[3]&termios.ICANON)),int(bool(a[3]&termios.ECHO)))\nprint('SSH_LS_FAKE_ARGV',json.dumps(sys.argv[1:]))\nsys.exit(23)\n")
             fake_ssh.chmod(0o700)
+            Store(directory / "state" / "ssh-ls").save_settings({"start_tab": "All"})
             master, slave = pty.openpty()
             env = {**os.environ, "PATH": str(directory) + os.pathsep + os.environ.get("PATH", ""), "XDG_CONFIG_HOME": str(directory / "state"), "TERM": "xterm-256color"}
             process = subprocess.Popen([sys.executable, "-m", "ssh_ls", "--config", str(config), "--no-history"], stdin=slave, stdout=slave, stderr=slave, env=env)
@@ -53,7 +55,7 @@ class CLITests(unittest.TestCase):
                         if not chunk:
                             break
                         received += chunk
-                    if not sent and b"fixture" in received and b"Ready" in received:
+                    if not sent and b"fixture" in received and b"Connect" in received:
                         time.sleep(0.15)
                         os.write(master, b"\r")
                         sent = True

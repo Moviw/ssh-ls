@@ -1,4 +1,5 @@
 import copy
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -104,12 +105,35 @@ class ServiceTests(unittest.TestCase):
 
     def test_settings_validate_and_reload(self):
         service = self.service()
+        self.assertEqual(service.settings["start_tab"], "Recent")
         service.save_settings({"accent": "#bb9af7", "row_height": 3, "ascii": True})
         service.reload()
         self.assertEqual(service.settings["row_height"], 3)
         self.assertTrue(service.settings["ascii"])
+        service.save_settings({"start_tab": "Favorites"})
+        service.reload()
+        self.assertEqual(service.settings["start_tab"], "Favorites")
+        previous = self.store.path.read_bytes()
+        for invalid in ("Everywhere", [], None, 1):
+            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                service.save_settings({"start_tab": invalid})
+            self.assertEqual(self.store.path.read_bytes(), previous)
         with self.assertRaises(ValueError):
             service.save_settings({"accent": "notacolor"})
+
+    def test_legacy_settings_default_without_losing_saved_hosts(self):
+        service = self.service()
+        alpha = copy.deepcopy(next(h for h in service.hosts if h.alias == "alpha"))
+        alpha.favorite = True
+        service.save(alpha)
+        legacy = self.store.read()
+        legacy["settings"].pop("start_tab")
+        self.store.path.write_text(json.dumps(legacy))
+
+        service.reload()
+        self.assertEqual(service.settings["start_tab"], "Recent")
+        restored = next(h for h in service.hosts if h.alias == "alpha")
+        self.assertTrue(restored.favorite)
 
 
 if __name__ == "__main__":

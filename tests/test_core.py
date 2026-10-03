@@ -69,6 +69,39 @@ class CoreTests(unittest.TestCase):
                 store.save_host(host)
             self.assertEqual(store.path.read_text(), "broken")
 
+    def test_store_start_tab_default_and_legacy_state_merge(self):
+        self.assertEqual(Store.empty()["settings"]["start_tab"], "Recent")
+        with tempfile.TemporaryDirectory() as tmp:
+            store = Store(Path(tmp) / "app")
+            host = self.host().to_dict()
+            legacy = {
+                "version": 1,
+                "hosts": {"test": host},
+                "settings": {"accent": "#7aa2f7", "row_height": 1, "ascii": False},
+            }
+            store.directory.mkdir(parents=True)
+            store.path.write_text(json.dumps(legacy))
+            loaded = store.read()
+            self.assertEqual(loaded["settings"]["start_tab"], "Recent")
+            self.assertEqual(loaded["hosts"], {"test": host})
+
+    def test_invalid_start_tab_is_rejected_without_overwriting_state(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            store = Store(Path(tmp) / "app")
+            store.save_settings({"start_tab": "Favorites"})
+            original = store.path.read_bytes()
+            for invalid in ("History", "Unknown", [], None, 3):
+                with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                    store.save_settings({"start_tab": invalid})
+                self.assertEqual(store.path.read_bytes(), original)
+            corrupt = json.loads(original)
+            corrupt["settings"]["start_tab"] = "Unknown"
+            store.path.write_text(json.dumps(corrupt))
+            bad_state = store.path.read_bytes()
+            with self.assertRaises(StateError):
+                store.read()
+            self.assertEqual(store.path.read_bytes(), bad_state)
+
     def test_two_store_instances_merge_hosts(self):
         with tempfile.TemporaryDirectory() as tmp:
             a, b = Store(Path(tmp)), Store(Path(tmp))
@@ -81,3 +114,17 @@ class CoreTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class RetiredTabMigrationTests(unittest.TestCase):
+    def test_old_history_start_page_migrates_without_writing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            store = Store(Path(tmp))
+            data = Store.empty()
+            data["settings"]["start_tab"] = "History"
+            payload = json.dumps(data)
+            store.path.write_text(payload)
+            self.assertEqual(store.read()["settings"]["start_tab"], "Recent")
+            self.assertEqual(store.path.read_text(), payload)
+            with self.assertRaises(ValueError):
+                store.save_settings({"start_tab": "History"})

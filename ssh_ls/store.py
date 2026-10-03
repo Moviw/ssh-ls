@@ -8,6 +8,8 @@ import tempfile
 from contextlib import contextmanager
 from pathlib import Path
 
+START_TABS = ("All", "Recent", "Favorites")
+
 
 class StateError(ValueError):
     pass
@@ -19,8 +21,18 @@ class Store:
         self.path = self.directory / "state.json"
 
     @staticmethod
+    def _validate_settings(settings):
+        if (settings["row_height"] not in (1, 3)
+                or not isinstance(settings["ascii"], bool)
+                or not isinstance(settings["accent"], str)
+                or not re.fullmatch(r"#[0-9a-fA-F]{6}", settings["accent"])
+                or not isinstance(settings["start_tab"], str)
+                or settings["start_tab"] not in START_TABS):
+            raise ValueError("invalid display settings")
+
+    @staticmethod
     def empty():
-        return {"version": 1, "hosts": {}, "settings": {"accent": "#7aa2f7", "row_height": 1, "ascii": False}}
+        return {"version": 1, "hosts": {}, "settings": {"accent": "#7aa2f7", "row_height": 1, "ascii": False, "start_tab": "Recent"}}
 
     def read(self):
         if not self.path.exists():
@@ -32,8 +44,10 @@ class Store:
             if any(not isinstance(v, dict) for v in data["hosts"].values()):
                 raise ValueError("invalid host record")
             settings = {**self.empty()["settings"], **data.get("settings", {})}
-            if settings["row_height"] not in (1, 3) or not isinstance(settings["ascii"], bool) or not isinstance(settings["accent"], str) or not re.fullmatch(r"#[0-9a-fA-F]{6}", settings["accent"]):
-                raise ValueError("invalid display settings")
+            if settings["start_tab"] == "History":
+                settings["start_tab"] = "Recent"
+            self._validate_settings(settings)
+            data["settings"] = settings
             return data
         except (OSError, ValueError, TypeError) as exc:
             raise StateError(f"Cannot read {self.path}: {exc}. Restore state.json.bak or move this file aside; it will not be overwritten.") from exc
@@ -90,4 +104,8 @@ class Store:
         return self.update(lambda data: data["hosts"].pop(host_id, None))
 
     def save_settings(self, settings):
-        return self.update(lambda data: data["settings"].update(settings))
+        def mutation(data):
+            candidate = {**self.empty()["settings"], **data["settings"], **settings}
+            self._validate_settings(candidate)
+            data["settings"] = candidate
+        return self.update(mutation)

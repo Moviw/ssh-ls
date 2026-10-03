@@ -14,7 +14,7 @@
 | `m` | Reorder with `j` / `k` or arrows; `Esc` finishes |
 | `r` | Enter a remote command |
 | `i` | Reload sources |
-| `o` | Accent color, row spacing, ASCII borders |
+| `o` / **Settings** button | Start page, accent color, row spacing, ASCII display |
 | `v` | Effective OpenSSH configuration, after confirmation |
 | `U` | Reset selected host's discovered-field overrides |
 | `H` | Restore hidden discovered hosts |
@@ -24,6 +24,16 @@
 | `q` | Quit |
 
 Shortcuts are inactive while editing text. Delete/hide and reset operations require confirmation. Production status is a manual flag, not something inferred from a hostname. Recent usage records connection attempts, not proof of successful authentication.
+
+## Views and preferences
+
+The three views are **All**, **Recent**, and **Favorites**. Recent combines connection attempts made in ssh-ls and destinations discovered from shell history. Known timestamps sort newest first; history entries without timestamps remain available at the end. There is no separate History tab.
+
+The default start page is Recent. Open the **Settings** page using its button or `o`, choose your start page, and select **Save**. The choice applies on the next launch; Back or Esc discards changes. Existing favorites and other metadata remain intact.
+
+![Settings page with startup and appearance preferences](settings.svg)
+
+Source references are grouped by file and consecutive line range, such as `config:~/.ssh/config:44–49`. Nonconsecutive lines are kept separate, and provenance data stays unchanged.
 
 ## CLI
 
