@@ -261,15 +261,18 @@ class CommandScreen(ModalScreen[str | None]):
 
 
 class SettingsScreen(Screen[dict[str, Any] | None]):
-    BINDINGS = [Binding("escape", "cancel", "Cancel", priority=True)]
+    BINDINGS = [
+        Binding("escape", "cancel", "Cancel", priority=True),
+        Binding("left,right", "switch_pane", "Switch tab", priority=True, show=False),
+    ]
     CSS = """
     SettingsScreen { align: center middle; background: $ssh-bg; color: $ssh-fg; }
     #settings-box { width: 104; max-width: 98%; height: 100%; max-height: 100%; padding: 1 2; border: round $ssh-border; background: $ssh-bg; }
+    SettingsScreen.short #settings-box { padding: 0 2; }
     #settings-title { height: 1; color: $ssh-accent; text-style: bold; }
     #settings-description { height: 1; color: $ssh-muted; text-wrap: nowrap; text-overflow: ellipsis; }
     #settings-fields { height: 1fr; }
-    #theme-preview { height: 2; padding: 0 1; margin-bottom: 0; background: $ssh-surface; }
-    .settings-row { height: 3; }
+    .settings-row { height: 3; margin-bottom: 1; }
     .settings-label { width: 20; padding-top: 1; color: $ssh-muted; }
     SettingsScreen.compact .settings-label { width: 14; }
     SettingsScreen.tiny .settings-label { width: 12; text-wrap: nowrap; text-overflow: ellipsis; }
@@ -312,8 +315,6 @@ class SettingsScreen(Screen[dict[str, Any] | None]):
                 yield Button("Themes", id="settings-themes")
             with VerticalScroll(id="settings-fields"):
                 with Vertical(id="general-pane"):
-                    yield Static("Theme colors", classes="settings-label")
-                    yield Static("", id="theme-preview")
                     with Horizontal(classes="settings-row"):
                         yield Label("Start page", classes="settings-label")
                         yield Select([(x, x) for x in ("Recent", "Favorites", "All")], value=self.settings.get("start_tab", "Recent"), id="setting-start-tab", allow_blank=False)
@@ -348,7 +349,7 @@ class SettingsScreen(Screen[dict[str, Any] | None]):
             with Horizontal(id="settings-actions"):
                 yield Button("Back", id="cancel")
                 yield Button("Save", id="save", variant="primary")
-            yield Static("Esc discards preview   ·   Save keeps your theme", id="settings-hint")
+            yield Static("Left/Right tabs   ·   Esc back   ·   Save applies changes", id="settings-hint")
 
     def on_mount(self) -> None:
         self._preview_theme()
@@ -357,6 +358,7 @@ class SettingsScreen(Screen[dict[str, Any] | None]):
     def _set_responsive(self, width: int) -> None:
         self.set_class(width < 78, "compact")
         self.set_class(width < 52, "tiny")
+        self.set_class(self.size.height < 20, "short")
 
     def on_resize(self, event) -> None:
         self._set_responsive(event.size.width)
@@ -368,7 +370,7 @@ class SettingsScreen(Screen[dict[str, Any] | None]):
         names = list(THEMES)
         index = names.index(focused.id.removeprefix("theme-"))
         columns = 1 if self.size.width < 52 else 2 if self.size.width < 78 else 3
-        delta = {"left": -1, "right": 1, "up": -columns, "down": columns}.get(event.key)
+        delta = {"up": -columns, "down": columns}.get(event.key)
         if delta is not None:
             next_index = max(0, min(len(names) - 1, index + delta))
             self.query_one(f"#theme-{names[next_index]}", Button).focus()
@@ -379,12 +381,25 @@ class SettingsScreen(Screen[dict[str, Any] | None]):
         if isinstance(event.widget, Button) and event.widget.id and event.widget.id.startswith("theme-"):
             self.query_one("#settings-fields", VerticalScroll).scroll_to_widget(event.widget, animate=False)
 
+    def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
+        if action == "switch_pane":
+            return not any(select.expanded for select in self.query(Select))
+        return super().check_action(action, parameters)
+
+    def action_switch_pane(self) -> None:
+        self._set_pane("Themes" if self.active_pane == "General" else "General")
+        self.query_one(f"#settings-{self.active_pane.lower()}", Button).focus()
+
+    def _set_pane(self, pane: str) -> None:
+        self.active_pane = pane
+        self.set_class(pane == "Themes", "show-themes")
+        self.query_one("#settings-general", Button).set_class(pane == "General", "active")
+        self.query_one("#settings-themes", Button).set_class(pane == "Themes", "active")
+        self.query_one("#settings-fields", VerticalScroll).scroll_home(animate=False)
+
     @on(Button.Pressed, "#settings-general, #settings-themes")
     def pane_pressed(self, event: Button.Pressed) -> None:
-        self.active_pane = "Themes" if event.button.id == "settings-themes" else "General"
-        self.set_class(self.active_pane == "Themes", "show-themes")
-        self.query_one("#settings-general", Button).set_class(self.active_pane == "General", "active")
-        self.query_one("#settings-themes", Button).set_class(self.active_pane == "Themes", "active")
+        self._set_pane("Themes" if event.button.id == "settings-themes" else "General")
 
     @on(Button.Pressed, "#theme-grid Button")
     def theme_card_pressed(self, event: Button.Pressed) -> None:
@@ -415,16 +430,7 @@ class SettingsScreen(Screen[dict[str, Any] | None]):
     def _preview_theme(self) -> None:
         settings = {"theme": self._selected_theme,
                     "accent": self.query_one("#setting-accent", Select).value}
-        colors = get_palette(settings)
         self.app._use_theme(settings)
-        preview = Text(colors["label"] + "  ", style="bold " + colors["fg"])
-        for role in ("accent", "purple", "success", "warning", "danger"):
-            preview.append("██ ", style=colors[role])
-        ascii_display = self.settings.get("ascii", False)
-        preview.append("\n" + ("+ Ready  " if ascii_display else "✓ Ready  "), style=colors["success"])
-        preview.append("! Warning  ", style=colors["warning"])
-        preview.append("x Failed" if ascii_display else "× Failed", style=colors["danger"])
-        self.query_one("#theme-preview", Static).update(preview)
 
     def action_cancel(self) -> None: self.dismiss(None)
 

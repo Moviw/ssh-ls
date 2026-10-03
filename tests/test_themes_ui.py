@@ -13,6 +13,72 @@ from ssh_ls.ui import SSHApp, SettingsScreen
 
 
 class ThemePilotTests(unittest.IsolatedAsyncioTestCase):
+    async def test_general_has_no_theme_preview_and_rows_keep_a_gap(self):
+        for size in ((100, 32), (60, 24), (40, 24), (42, 16)):
+            with self.subTest(size=size):
+                service = Service(demo=True)
+                service.settings["row_height"] = 1
+                app = SSHApp(service)
+                async with app.run_test(size=size) as pilot:
+                    await pilot.press("o")
+                    await pilot.pause()
+                    screen = app.screen
+                    self.assertFalse(screen.query("#theme-preview"))
+                    self.assertNotIn("Theme colors", [str(w.content) for w in screen.query("Static")])
+                    rows = list(screen.query(".settings-row"))
+                    self.assertEqual(len(rows), 4)
+                    for before, after in zip(rows, rows[1:]):
+                        self.assertGreaterEqual(after.region.y - before.region.bottom, 1)
+                    screen.query_one("#setting-ascii").focus()
+                    await pilot.pause()
+                    fields = screen.query_one("#settings-fields")
+                    checkbox = screen.query_one("#setting-ascii")
+                    self.assertLessEqual(checkbox.region.bottom, fields.region.bottom)
+                    self.assertGreaterEqual(checkbox.region.y, fields.region.y)
+                    self.assertLessEqual(screen.query_one("#save").region.bottom, size[1])
+
+    async def test_left_right_switch_tabs_from_controls_and_theme_cards(self):
+        service = Service(demo=True)
+        app = SSHApp(service)
+        async with app.run_test(size=(80, 28)) as pilot:
+            await pilot.press("o", "right")
+            screen = app.screen
+            self.assertEqual(screen.active_pane, "Themes")
+            self.assertEqual(app.focused.id, "settings-themes")
+            screen.query_one("#theme-dracula").focus()
+            await pilot.press("enter", "left")
+            self.assertEqual(screen.active_pane, "General")
+            self.assertEqual(app._palette, THEMES["dracula"])
+            screen.query_one("#setting-start-tab").value = "Favorites"
+            for selector in ("#setting-start-tab", "#setting-ascii", "#save"):
+                screen.query_one(selector).focus()
+                await pilot.press("right")
+                self.assertEqual(screen.active_pane, "Themes")
+                await pilot.press("left")
+                self.assertEqual(screen.active_pane, "General")
+            self.assertEqual(screen.query_one("#setting-start-tab").value, "Favorites")
+            await pilot.click("#save")
+            self.assertEqual(service.settings["theme"], "dracula")
+            self.assertEqual(service.settings["start_tab"], "Favorites")
+
+    async def test_expanded_select_keeps_keyboard_control(self):
+        app = SSHApp(Service(demo=True))
+        async with app.run_test(size=(60, 24)) as pilot:
+            await pilot.press("o")
+            screen = app.screen
+            select = screen.query_one("#setting-start-tab")
+            select.focus()
+            await pilot.press("enter")
+            self.assertTrue(select.expanded)
+            await pilot.press("left", "right")
+            self.assertEqual(screen.active_pane, "General")
+            self.assertTrue(select.expanded)
+            await pilot.press("down", "enter")
+            self.assertFalse(select.expanded)
+            self.assertEqual(select.value, "Favorites")
+            await pilot.press("right")
+            self.assertEqual(screen.active_pane, "Themes")
+
     async def test_all_presets_are_selectable_and_apply_full_palette_on_save(self):
         service = Service(demo=True)
         app = SSHApp(service)

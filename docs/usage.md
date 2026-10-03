@@ -31,6 +31,8 @@ The three views are **All**, **Recent**, and **Favorites**. Recent combines conn
 
 The default start page is Recent. Open the **Settings** page using its button or `o`, choose your start page, and select **Save**. The choice applies on the next launch; Back or Esc discards changes. Existing favorites and other metadata remain intact.
 
+In Settings, `←` / `→` switches between General and Themes. Expanded dropdowns keep their own keyboard controls; close the dropdown before switching tabs. `Tab` moves between controls, and `↑` / `↓` moves between rows of theme cards. General contains only the preference controls, with a blank line between rows even when host row spacing is Compact; theme previews live in Themes.
+
 ### Themes
 
 Tokyo Night is the default. Settings has separate **General** and **Themes** tabs. The Themes gallery shows ten selectable preview cards with fictional hosts; it adapts to terminal width and scrolls on smaller terminals. The palettes are: Tokyo Night, Dracula, Catppuccin Mocha, Nord, Gruvbox Dark, Rosé Pine, Minimal, Cyberpunk, Ocean, and Retro. Choosing a theme previews its background, panels, text, borders, and status colors immediately. Save keeps the choice for future launches; Back or Esc restores the saved appearance without writing state.
