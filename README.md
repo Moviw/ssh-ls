@@ -2,15 +2,15 @@
 
 **Stop digging through shell history for that SSH command.**
 
-I didn't want to keep typing `ssh ...`. My SSH config and shell history already held the destinations—I wanted to pick one instead of remembering which alias or command to type.
-
-ssh-ls is a terminal host picker for people who move between remote machines throughout the day. It turns the connections you already have into a searchable list, then hands the selected host to your system's `ssh`.
-
-[中文](README.zh-CN.md) · [Usage](docs/usage.md) · [Releases](https://github.com/Moviw/ssh-ls/releases) · [Contributing](#contributing)
-
 [![CI](https://github.com/Moviw/ssh-ls/actions/workflows/ci.yml/badge.svg)](https://github.com/Moviw/ssh-ls/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/Moviw/ssh-ls)](https://github.com/Moviw/ssh-ls/releases/latest)
 [![MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+[English](README.md) · [简体中文](README.zh-CN.md) · [Usage](docs/usage.md) · [Releases](https://github.com/Moviw/ssh-ls/releases)
+
+I didn't want to keep typing `ssh ...`. My SSH config and shell history already held the destinations—I wanted to pick one instead of remembering which alias or command to type.
+
+ssh-ls is a terminal host picker for people who move between remote machines throughout the day. It turns the connections you already have into a searchable list, then hands the selected host to your system's `ssh`.
 
 ## Your existing hosts, one list
 
