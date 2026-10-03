@@ -9,7 +9,7 @@
 [![CI](https://github.com/Moviw/ssh-ls/actions/workflows/ci.yml/badge.svg)](https://github.com/Moviw/ssh-ls/actions/workflows/ci.yml)
 [![MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-记 SSH 别名、反复敲命令、翻历史记录，很烦。ssh-ls 把 SSH 配置和历史里的主机整理成一个可搜索的列表：选中一台，按下回车，用系统 OpenSSH 连接。
+我就是懒，不想每次自己打 `ssh ...`。连接信息明明已经在 `.ssh/config` 和历史记录里，我想直接选一台，不用再想该敲哪个别名、找哪条命令。
 
 ## 选一台，按回车
 

@@ -9,7 +9,7 @@
 [![CI](https://github.com/Moviw/ssh-ls/actions/workflows/ci.yml/badge.svg)](https://github.com/Moviw/ssh-ls/actions/workflows/ci.yml)
 [![MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Remembering SSH aliases and digging through shell history gets old. ssh-ls brings hosts from your SSH config and history into one searchable list: pick a host, press Enter, and connect with native OpenSSH.
+I didn't want to keep typing `ssh ...`. My SSH config and shell history already held the destinations—I wanted to pick one instead of remembering which alias or command to type.
 
 ## Pick a host. Press Enter.
 
