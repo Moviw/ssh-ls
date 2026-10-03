@@ -2,11 +2,11 @@
 
 **Stop digging through shell history for that SSH command.**
 
+English · [简体中文](README.zh-CN.md) · [Usage](docs/usage.md) · [Releases](https://github.com/Moviw/ssh-ls/releases)
+
 [![CI](https://github.com/Moviw/ssh-ls/actions/workflows/ci.yml/badge.svg)](https://github.com/Moviw/ssh-ls/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/Moviw/ssh-ls)](https://github.com/Moviw/ssh-ls/releases/latest)
 [![MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-
-English · [简体中文](README.zh-CN.md) · [Usage](docs/usage.md) · [Releases](https://github.com/Moviw/ssh-ls/releases)
 
 I didn't want to keep typing `ssh ...`. My SSH config and shell history already held the destinations—I wanted to pick one instead of remembering which alias or command to type.
 
