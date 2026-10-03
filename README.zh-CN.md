@@ -2,26 +2,31 @@
 
 **别再翻历史找那条 SSH 命令了。**
 
-[English](README.md) · [使用说明](docs/usage.md) · [参与开发](docs/development.md)
-
-[![CI](https://github.com/Moviw/ssh-ls/actions/workflows/ci.yml/badge.svg)](https://github.com/Moviw/ssh-ls/actions/workflows/ci.yml)
-[![MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-
 我就是懒，不想每次自己打 `ssh ...`。连接信息明明已经在 `.ssh/config` 和历史记录里，我想直接选一台，不用再想该敲哪个别名、找哪条命令。
 
-## 选一台，按回车
+如果你每天都在几台远程机器之间切换，ssh-ls 可以把已有的连接整理成终端里的主机列表。你选中一台，系统的 `ssh` 接着完成连接。
 
-运行 `ssh-ls`，你会看到 SSH 配置里的主机，以及从 bash、zsh 历史记录中识别出的连接。按 `/` 搜索，用 `j` / `k` 或方向键选中主机，再按 `Enter`。选择器退出，系统的 `ssh` 接管终端；连接结束后，你回到原来的 shell。
+[English](README.md) · [使用说明](docs/usage.md) · [版本记录](https://github.com/Moviw/ssh-ls/releases) · [参与开发](#参与开发)
 
-常用的主机按空格收藏。**Recent** 合并 ssh-ls 中的连接尝试和 shell 历史里发现的连接，已知时间的记录按最近使用排序。原来的配置和历史文件都不改，ssh-ls 单独保存收藏和连接记录。
+[![CI](https://github.com/Moviw/ssh-ls/actions/workflows/ci.yml/badge.svg)](https://github.com/Moviw/ssh-ls/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/Moviw/ssh-ls)](https://github.com/Moviw/ssh-ls/releases/latest)
+[![MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-密钥、SSH Agent、跳板机和认证仍然由 OpenSSH 处理。ssh-ls 只负责帮你选主机，不另造一个 SSH 客户端，也不管理密码。
+## 已有的主机，直接选
 
-![ssh-ls 展示配置与历史中的主机](docs/demo.svg)
+运行 `ssh-ls`，选择器会读取 `.ssh/config` 中明确写出的主机别名，以及 bash、zsh 历史里支持的 SSH 命令。按 `/` 搜索，选中主机，再按 `Enter`。选择器退出，原生 SSH 接管终端；会话结束后，你回到原来的 shell。
 
-*截图使用虚构数据。运行 `ssh-ls --demo` 即可体验，不读取你的 SSH 文件。*
+Recent 把有时间记录的连接按最近使用排序。按 `Space` 收藏常用主机，下次在 Favorites 里找到它们。开始使用前，不用再手动录一份主机清单。
 
-## 安装
+密钥、SSH Agent、跳板机和认证仍由现有的 OpenSSH 配置处理。ssh-ls 不替换 SSH 客户端，也不管理密码。
+
+## 先看看，再用自己的主机
+
+![ssh-ls 的主机列表和连接详情](docs/demo.svg)
+
+截图使用虚构主机。安装后运行 `ssh-ls --demo` 就能试用界面，不读取你的 SSH 文件、不联系服务器，也不保存修改。
+
+## 安装，然后连接
 
 需要 macOS 或 Linux、curl 和 OpenSSH。
 
@@ -30,9 +35,12 @@ curl -fsSL https://raw.githubusercontent.com/Moviw/ssh-ls/main/install.sh | sh
 ssh-ls
 ```
 
-脚本用 [uv](https://docs.astral.sh/uv/) 创建独立环境；没装 uv 或 Python 时，会自动安装 uv 和下载 Python 3.11。不需要 sudo、Git，也不用提前装 Python。不会修改 shell 启动文件、SSH 配置或 ssh-ls 设置。如果命令目录不在 PATH 里，安装后会提示完整启动路径。
+选一台主机，按回车。如果 Recent 还没有记录，切到 All 就能看到配置中的主机。不用导入向导，也不用注册账号。
 
-安装来源是最新稳定 GitHub Release。更新用 `ssh-ls update`，卸载用 `ssh-ls uninstall`。想先检查脚本，可以下载后再执行：
+安装器从 GitHub 获取最新稳定 Release，用 [uv](https://docs.astral.sh/uv/) 创建独立环境；需要时会安装 uv、下载 Python 3.11。不需要 sudo、Git 或预装 Python。SSH 文件、shell 启动文件和已有设置都不改。如果命令不在 PATH 中，安装器会提示完整启动路径。
+
+<details>
+<summary>先检查安装器，或直接用 uv / pipx 安装</summary>
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/Moviw/ssh-ls/main/install.sh -o install.sh
@@ -40,7 +48,7 @@ less install.sh
 sh install.sh
 ```
 
-已经使用 uv 或 pipx 的话，也可以安装相同的稳定发布包，需要 Python 3.11+：
+已有 Python 3.11+ 的话，也可以直接安装相同的稳定发布包：
 
 ```sh
 uv tool install https://github.com/Moviw/ssh-ls/releases/latest/download/ssh-ls.tar.gz
@@ -48,35 +56,37 @@ uv tool install https://github.com/Moviw/ssh-ls/releases/latest/download/ssh-ls.
 pipx install https://github.com/Moviw/ssh-ls/releases/latest/download/ssh-ls.tar.gz
 ```
 
+内置更新和卸载命令只管理官方 uv 安装。pipx 和源码安装请使用原来的安装方式。
+
+</details>
+
 ## 最常用的几个键
 
 | 按键 | 操作 |
 | --- | --- |
 | `/` | 按名称、主机、用户名或跳板机搜索 |
 | `j` / `k`、`↑` / `↓` | 选择主机 |
-| `Tab`、`←` / `→` | 切换全部、最近、收藏 |
+| `Tab`、`←` / `→` | 切换 All、Recent、Favorites |
 | `Enter` | 连接 |
 | `Space` | 收藏或取消收藏 |
+| `o` | 设置和主题画廊 |
 | `?` | 查看全部快捷键 |
 | `q` | 退出 |
 
-默认打开 **Recent**。点击 **Settings** 或按 `o` 进入配置页，可以选择 Recent、Favorites 或 All 作为启动页，也能选择主题、调整强调色、行距和 ASCII 显示。
+默认打开 Recent。按 `o` 可以把启动页改为 Favorites 或 All。主机编辑、排序、远程命令和其他操作见[使用说明](docs/usage.md)。
 
-主题默认是 Tokyo Night。也预置了 Dracula、Catppuccin Mocha、Nord、Gruvbox Dark、Rosé Pine、Minimal、Cyberpunk、Ocean 和 Retro。在 Settings 的 **Themes** 标签页选择卡片即可预览，Save 保存，Esc 放弃预览。
+## 选一个顺眼的主题
 
-![主题画廊](docs/themes.svg)
+Settings 分为 General 和 Themes 两个标签页。选择主题卡片即可预览整个界面，Save 保存，Esc 放弃预览。强调色、行距和 ASCII 显示也可以调整。
 
-你也可以新增、编辑、复制、隐藏和手动排列主机，调整排序，明确输入一条远程命令，或更换强调色与行距。[完整快捷键与命令行选项 →](docs/usage.md)
+默认主题是 Tokyo Night。另有 Dracula、Catppuccin Mocha、Nord、Gruvbox Dark、Rosé Pine、Minimal、Cyberpunk、Ocean 和 Retro。
 
-## 你可能想问
+<details>
+<summary>查看十套主题的预览画廊</summary>
 
-**会改我的 SSH 配置吗？** 不会。编辑结果作为本地覆盖项，保存在 `${XDG_CONFIG_HOME:-~/.config}/ssh-ls/`。实际连接行为仍以 OpenSSH 为准；界面显示的是配置估计值，按 `v` 可以主动预览生效配置。
+![Settings 中的十套主题预览](docs/themes.svg)
 
-**会重放历史命令吗？** 不会。导入器只从支持的 SSH 命令中提取连接字段，丢弃远程命令；遇到 shell 替换、环境变量赋值，或无法还原原工作目录的相对密钥、配置路径，就跳过。这意味着部分历史记录不会出现。
-
-**打开界面就会偷偷连接吗？** 不会。选择器不在后台探测服务器，也不自动运行 `ssh -G`。你选择主机后才开始连接；手动标记为生产环境的主机还需要确认。
-
-**会改变我现在的终端用法吗？** 不会。系统 `ssh` 直接接管终端，退出码照常保留。不需要云端账号、同步服务或另一套凭据存储。
+</details>
 
 ## 更新和卸载
 
@@ -85,13 +95,25 @@ ssh-ls update
 ssh-ls uninstall
 ```
 
-卸载需要确认，只移除应用，保留收藏、设置、SSH 文件、uv 和 Python。`--yes` 可跳过交互确认。内置命令只管理官方 uv 安装；pipx 和源码安装请使用原来的安装方式。
+卸载需要确认，只移除应用，保留收藏、设置、SSH 文件、uv 和 Python。明确需要非交互卸载时，可以用 `ssh-ls uninstall --yes`。
 
-正常启动时会在后台检查 GitHub 稳定版本；发现更新时显示版本和更新命令，不自动升级，离线静默，Demo 不联网。不发送 SSH 配置或历史。Settings 分为 General 和 Themes 两个标签页，主题画廊提供十套可预览的主题卡片，默认仍是 Tokyo Night。底栏新增 `o Settings`。
+正常启动时会在后台检查 GitHub 的公开版本信息；有新稳定版本时，小提示条会显示版本和 `ssh-ls update`。不会自动升级，离线时静默，不发送 SSH 配置或历史。Demo 模式不联网。
+
+## 哪些东西不会变
+
+**会修改 `.ssh/config` 吗？** 不会。主机编辑只作为本地覆盖项保存在 `${XDG_CONFIG_HOME:-~/.config}/ssh-ls/`。连接行为以原生 OpenSSH 为准，界面里的配置字段是估计值。
+
+**会重放历史命令吗？** 不会。导入器提取连接字段，丢弃远程命令，跳过不支持或依赖 shell 上下文的语法。不是每条历史记录都会出现。[解析范围](docs/usage.md#config-and-history)。
+
+**启动就会连接或探测主机吗？** 不会。你选择主机后才启动 SSH。手动标记为生产环境的主机会要求确认。`v` 提供生效配置预览，但会先提示风险：即使只是预览，OpenSSH 的 `Match exec` 也可能执行本地命令。
+
+**会改变 SSH 会话的用法吗？** 系统 `ssh` 直接接管终端，退出码照常保留。Recent 记录的是连接尝试，不代表认证已经成功。
 
 ## 参与开发
 
-欢迎报告问题和提交范围明确的 PR。请附上操作系统、Python 版本，以及可以复现问题的虚构配置或历史样例，不要提交私钥或真实 shell 历史。[开发说明 →](docs/development.md)
+遇到了无法识别的历史命令，或者终端宽度下的布局问题？[提交 issue](https://github.com/Moviw/ssh-ls/issues) 时，请附上操作系统、Python 版本和虚构的复现样例。不要提交私钥、真实主机清单或真实 shell 历史。
+
+欢迎范围明确的小型 PR。[开发说明](docs/development.md)里有测试方式；版本改动记录在 [GitHub Releases](https://github.com/Moviw/ssh-ls/releases)。
 
 ---
 

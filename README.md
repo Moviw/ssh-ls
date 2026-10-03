@@ -2,26 +2,31 @@
 
 **Stop digging through shell history for that SSH command.**
 
-[中文](README.zh-CN.md) · [Usage](docs/usage.md) · [Contributing](docs/development.md)
-
-[![CI](https://github.com/Moviw/ssh-ls/actions/workflows/ci.yml/badge.svg)](https://github.com/Moviw/ssh-ls/actions/workflows/ci.yml)
-[![MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-
 I didn't want to keep typing `ssh ...`. My SSH config and shell history already held the destinations—I wanted to pick one instead of remembering which alias or command to type.
 
-## Pick a host. Press Enter.
+ssh-ls is a terminal host picker for people who move between remote machines throughout the day. It turns the connections you already have into a searchable list, then hands the selected host to your system's `ssh`.
 
-Run `ssh-ls` to see hosts from your SSH config and supported commands in your bash or zsh history. Type `/` to search, move with `j` / `k` or the arrow keys, and press `Enter`. The picker closes and your system's `ssh` takes over. When the session ends, you're back at your shell.
+[中文](README.zh-CN.md) · [Usage](docs/usage.md) · [Releases](https://github.com/Moviw/ssh-ls/releases) · [Contributing](#contributing)
 
-Star the hosts you use often. **Recent** combines connection attempts in ssh-ls with hosts found in your shell history, with known timestamps sorted newest first. Config and history stay unchanged; ssh-ls keeps its own favorites and connection metadata.
+[![CI](https://github.com/Moviw/ssh-ls/actions/workflows/ci.yml/badge.svg)](https://github.com/Moviw/ssh-ls/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/Moviw/ssh-ls)](https://github.com/Moviw/ssh-ls/releases/latest)
+[![MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Your existing OpenSSH setup still handles keys, agents, jump hosts, and authentication. ssh-ls is a host picker, not another SSH client or password vault.
+## Your existing hosts, one list
 
-![ssh-ls showing configured and historical hosts](docs/demo.svg)
+Run `ssh-ls`. The picker reads literal host aliases from `.ssh/config` and supported SSH commands from your bash or zsh history. Press `/` to search, select a host, and press `Enter`. The picker closes, native SSH takes over your terminal, and the session ends back at your shell.
 
-*Fictional demo data. Try it without reading your SSH files: `ssh-ls --demo`.*
+Recent puts known, timestamped connections first. Press `Space` to star the hosts you return to, and find them under Favorites next time. There's no second host inventory you have to fill in before getting started.
 
-## Install
+Your existing OpenSSH setup still handles keys, agents, jump hosts, and authentication. ssh-ls doesn't replace the SSH client or manage passwords.
+
+## See it before using your own hosts
+
+![ssh-ls showing a searchable host list and connection details](docs/demo.svg)
+
+The screenshot uses fictional hosts. Run `ssh-ls --demo` after installing to try the picker without reading your SSH files, contacting servers, or saving changes.
+
+## Install and connect
 
 Requires macOS or Linux, curl, and OpenSSH.
 
@@ -30,9 +35,12 @@ curl -fsSL https://raw.githubusercontent.com/Moviw/ssh-ls/main/install.sh | sh
 ssh-ls
 ```
 
-The installer uses [uv](https://docs.astral.sh/uv/) to create an isolated environment. If needed, it installs uv and downloads Python 3.11. No sudo, Git, or preinstalled Python is required. It leaves your shell profiles, SSH files, and ssh-ls settings alone. If the command directory isn't on your PATH, it prints the full executable path.
+Choose a host and press `Enter`. If Recent is empty, switch to All to see your configured hosts. No import wizard or account to create.
 
-The installer uses the latest stable GitHub Release. Run `ssh-ls update` to update, or `ssh-ls uninstall` to remove the app after confirmation. Both keep your settings and SSH files. To inspect the script before running it:
+The installer gets the latest stable GitHub Release in an isolated [uv](https://docs.astral.sh/uv/) environment. It installs uv and downloads Python 3.11 if needed; no sudo, Git, or preinstalled Python is required. Your SSH files, shell profiles, and saved settings stay unchanged. If the command isn't on PATH, the installer prints its full path.
+
+<details>
+<summary>Inspect the installer or use uv / pipx directly</summary>
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/Moviw/ssh-ls/main/install.sh -o install.sh
@@ -40,7 +48,7 @@ less install.sh
 sh install.sh
 ```
 
-Already using uv or pipx? Install the same stable release with Python 3.11+:
+With Python 3.11+, you can install the same stable asset directly:
 
 ```sh
 uv tool install https://github.com/Moviw/ssh-ls/releases/latest/download/ssh-ls.tar.gz
@@ -48,7 +56,11 @@ uv tool install https://github.com/Moviw/ssh-ls/releases/latest/download/ssh-ls.
 pipx install https://github.com/Moviw/ssh-ls/releases/latest/download/ssh-ls.tar.gz
 ```
 
-## The keys you'll actually use
+Built-in update and uninstall support official uv installations. For pipx or source installs, use the original installation method instead.
+
+</details>
+
+## The keys you'll use
 
 | Key | Action |
 | --- | --- |
@@ -61,29 +73,47 @@ pipx install https://github.com/Moviw/ssh-ls/releases/latest/download/ssh-ls.tar
 | `?` | Show all shortcuts |
 | `q` | Quit |
 
-The picker opens on **Recent** by default. Click **Settings** or press `o` to choose Recent, Favorites, or All as your start page, pick a theme, and adjust accent color, row spacing, and ASCII display.
+The picker opens on Recent. Press `o` to choose Favorites or All as your start page. Host edits, sorting, remote commands, and the remaining controls are in the [usage guide](docs/usage.md).
 
-Tokyo Night is the default. The **Themes** tab shows a preview card for each preset, including Dracula, Catppuccin Mocha, Nord, Gruvbox Dark, Rosé Pine, Minimal, Cyberpunk, Ocean, and Retro. Select a card to preview it, then Save to keep it; Esc discards the preview.
+## Make it yours
 
-![Theme gallery](docs/themes.svg)
+Settings has separate General and Themes tabs. Choose a theme card to preview it across the app; Save keeps it, and Esc discards the preview. You can also adjust accent color, row spacing, and ASCII display.
 
-You can also add, edit, clone, hide, and reorder hosts; sort the list; run an explicit remote command; and adjust the accent color or row spacing. [Full controls and CLI options →](docs/usage.md)
+Tokyo Night is the default. The gallery includes Dracula, Catppuccin Mocha, Nord, Gruvbox Dark, Rosé Pine, Minimal, Cyberpunk, Ocean, and Retro.
 
-Interactive launches check GitHub for a newer stable release in the background. If one is available, a small banner shows the version and `ssh-ls update`. No automatic update, no SSH data sent, and no interruption when offline. Demo mode stays offline. Built-in update and uninstall support official uv installs; pipx and source installs use their own manager.
+<details>
+<summary>See the ten-theme gallery</summary>
 
-## A few things to know
+![Ten selectable theme previews in ssh-ls Settings](docs/themes.svg)
 
-**Will it change my SSH config?** No. Edits are local overrides stored under `${XDG_CONFIG_HOME:-~/.config}/ssh-ls/`. OpenSSH remains the source of truth for connection behavior. Displayed config fields are estimates; `v` offers an explicit effective-config preview.
+</details>
 
-**Does it replay commands from my history?** No. The importer extracts connection fields from a conservative subset of SSH commands. It discards remote commands and skips shell substitutions, environment assignments, and relative key/config paths whose original working directory is unknown. Some history entries will not appear.
+## Update or uninstall
 
-**Will it connect in the background?** No. Opening the picker doesn't probe servers or run `ssh -G`. Connection starts when you choose a host. Hosts you mark as production require confirmation.
+```sh
+ssh-ls update
+ssh-ls uninstall
+```
 
-**Does this replace my terminal workflow?** No. Native `ssh` inherits your terminal, and ssh-ls preserves its exit status. There is no cloud account, sync service, or separate credential store.
+Uninstall asks for confirmation and removes only the app. Favorites, settings, SSH files, uv, and Python are kept. `ssh-ls uninstall --yes` is available for explicit noninteractive removal.
+
+Interactive launches check public GitHub release metadata in the background. A newer stable version appears in a small banner with `ssh-ls update`; nothing upgrades automatically. Offline failures are silent, and no SSH config or history is sent. Demo mode stays offline.
+
+## What stays unchanged
+
+**Will it edit `.ssh/config`?** No. Host edits are local overrides under `${XDG_CONFIG_HOME:-~/.config}/ssh-ls/`. Native OpenSSH remains the source of truth for connections; displayed config fields are estimates.
+
+**Will it replay shell history commands?** No. The importer extracts connection fields, discards remote commands, and skips unsupported or shell-dependent syntax. Not every history entry will appear. [Parsing limits](docs/usage.md#config-and-history).
+
+**Does it connect or probe hosts on startup?** No. SSH starts when you choose a host. Hosts you manually mark as production require confirmation. The `v` shortcut offers an explicit effective-config preview after a warning: OpenSSH's `Match exec` can execute local commands even during that preview.
+
+**Does it change how SSH sessions work?** Native `ssh` inherits your terminal, and ssh-ls preserves its exit status. Recent records connection attempts, not proof that authentication succeeded.
 
 ## Contributing
 
-Bug reports and small, focused pull requests are welcome. Include your OS, Python version, and a fictional config or history example that reproduces the problem—never private keys or real shell history. See the [development guide](docs/development.md).
+Found a missing history format or a terminal layout that doesn't fit? [Open an issue](https://github.com/Moviw/ssh-ls/issues) with your OS, Python version, and a fictional example. Never include private keys, real host inventories, or real shell history.
+
+Small, focused pull requests are welcome. See the [development guide](docs/development.md). Version changes are listed in [GitHub Releases](https://github.com/Moviw/ssh-ls/releases).
 
 ---
 
