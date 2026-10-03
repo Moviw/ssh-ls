@@ -1,7 +1,5 @@
 # ssh-ls
 
-*Dedicated to my research days in Nakayama Lab.*
-
 **别再翻历史找那条 SSH 命令了。**
 
 [English](README.md) · [使用说明](docs/usage.md) · [参与开发](docs/development.md)
@@ -80,10 +78,6 @@ pipx install https://github.com/Moviw/ssh-ls/releases/latest/download/ssh-ls.tar
 
 **会改变我现在的终端用法吗？** 不会。系统 `ssh` 直接接管终端，退出码照常保留。不需要云端账号、同步服务或另一套凭据存储。
 
-## 参与开发
-
-欢迎报告问题和提交范围明确的 PR。请附上操作系统、Python 版本，以及可以复现问题的虚构配置或历史样例，不要提交私钥或真实 shell 历史。[开发说明 →](docs/development.md)
-
 ## 更新和卸载
 
 ```sh
@@ -94,3 +88,9 @@ ssh-ls uninstall
 卸载需要确认，只移除应用，保留收藏、设置、SSH 文件、uv 和 Python。`--yes` 可跳过交互确认。内置命令只管理官方 uv 安装；pipx 和源码安装请使用原来的安装方式。
 
 正常启动时会在后台检查 GitHub 稳定版本；发现更新时显示版本和更新命令，不自动升级，离线静默，Demo 不联网。不发送 SSH 配置或历史。Settings 分为 General 和 Themes 两个标签页，主题画廊提供十套可预览的主题卡片，默认仍是 Tokyo Night。底栏新增 `o Settings`。
+
+## 参与开发
+
+欢迎报告问题和提交范围明确的 PR。请附上操作系统、Python 版本，以及可以复现问题的虚构配置或历史样例，不要提交私钥或真实 shell 历史。[开发说明 →](docs/development.md)
+
+*Dedicated to my research days in Nakayama Lab.*

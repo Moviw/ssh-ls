@@ -1,7 +1,5 @@
 # ssh-ls
 
-*Dedicated to my research days in Nakayama Lab.*
-
 **Stop digging through shell history for that SSH command.**
 
 [中文](README.zh-CN.md) · [Usage](docs/usage.md) · [Contributing](docs/development.md)
@@ -86,3 +84,5 @@ Interactive launches check GitHub for a newer stable release in the background. 
 ## Contributing
 
 Bug reports and small, focused pull requests are welcome. Include your OS, Python version, and a fictional config or history example that reproduces the problem—never private keys or real shell history. See the [development guide](docs/development.md).
+
+*Dedicated to my research days in Nakayama Lab.*
