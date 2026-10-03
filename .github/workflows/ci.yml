@@ -33,6 +33,18 @@ jobs:
       - name: Run unit tests
         run: uv run python -m unittest discover -s tests -v
 
+      - name: Check installer syntax
+        run: sh -n install.sh
+
+      - name: Smoke-test installer in an isolated tool directory
+        if: matrix.python-version == '3.11'
+        shell: bash
+        run: |
+          export UV_TOOL_DIR="$RUNNER_TEMP/ssh-ls-tools"
+          export UV_TOOL_BIN_DIR="$RUNNER_TEMP/ssh-ls-bin"
+          sh install.sh
+          "$UV_TOOL_BIN_DIR/ssh-ls" --demo --doctor
+
       - name: Install OpenSSH server for native localhost integration test
         if: matrix.os == 'ubuntu-latest'
         run: |

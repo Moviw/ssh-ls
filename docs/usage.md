@@ -67,10 +67,28 @@ Editing a discovered host creates an override, not a change to `.ssh/config`. De
 
 An identity override adds `-i` arguments to native SSH. It does **not** remove `IdentityFile` entries in your SSH config; clearing the override leaves those native entries in effect. Advanced SSH options are passed to OpenSSH, so use options and configurations you trust.
 
+## Installation and updates
+
+The curl installer installs the latest `main` branch into a uv tool environment. It reuses uv on your PATH (or `~/.local/bin/uv`), and otherwise downloads the official [uv installer](https://docs.astral.sh/uv/reference/installer/) with shell-profile changes disabled. Python 3.11 is downloaded if needed. It doesn't connect to SSH hosts or access your config, history, or app state.
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/Moviw/ssh-ls/main/install.sh | sh
+```
+
+Rerun this command to update. It refreshes the source archive and upgrades dependencies; it does not install a numbered release or verify a project release signature. For a fixed revision, use uv with a Git commit instead of the moving `main` branch.
+
+The command normally lands in `~/.local/bin`. If that directory isn't on PATH, use the full path printed by the installer, or add the directory yourself. For bash/zsh with the default location:
+
+```sh
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+Put that line in your shell's startup file if you want it to persist. Alternatively, `uv tool update-shell` can configure PATH for you; unlike our installer, that command edits your shell profile.
+
 To remove the installed command:
 
 ```sh
 uv tool uninstall ssh-ls
 ```
 
-This leaves your local state and SSH files untouched.
+If uv isn't on PATH, run `~/.local/bin/uv tool uninstall ssh-ls`. Uninstalling ssh-ls leaves uv, any downloaded Python, your local state, and SSH files untouched.

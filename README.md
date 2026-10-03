@@ -23,18 +23,28 @@ Your existing OpenSSH setup still handles keys, agents, jump hosts, and authenti
 
 ## Install
 
-Requires macOS or Linux, Python 3.11+, and OpenSSH.
-
-With [uv](https://docs.astral.sh/uv/):
+Requires macOS or Linux, curl, and OpenSSH.
 
 ```sh
-uv tool install git+https://github.com/Moviw/ssh-ls.git
+curl -fsSL https://raw.githubusercontent.com/Moviw/ssh-ls/main/install.sh | sh
 ssh-ls
 ```
 
-Or with [pipx](https://pipx.pypa.io/):
+The installer uses [uv](https://docs.astral.sh/uv/) to create an isolated environment. If needed, it installs uv and downloads Python 3.11. No sudo, Git, or preinstalled Python is required. It leaves your shell profiles, SSH files, and ssh-ls settings alone. If the command directory isn't on your PATH, it prints the full executable path.
+
+Run the same command again to update to the latest `main` branch. To inspect the script before running it:
 
 ```sh
+curl -fsSL https://raw.githubusercontent.com/Moviw/ssh-ls/main/install.sh -o install.sh
+less install.sh
+sh install.sh
+```
+
+Already using uv or pipx? These still work with Python 3.11+ and Git:
+
+```sh
+uv tool install git+https://github.com/Moviw/ssh-ls.git
+# or
 pipx install git+https://github.com/Moviw/ssh-ls.git
 ```
 

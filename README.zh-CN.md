@@ -23,18 +23,28 @@
 
 ## 安装
 
-需要 macOS 或 Linux、Python 3.11+ 和 OpenSSH。
-
-使用 [uv](https://docs.astral.sh/uv/)：
+需要 macOS 或 Linux、curl 和 OpenSSH。
 
 ```sh
-uv tool install git+https://github.com/Moviw/ssh-ls.git
+curl -fsSL https://raw.githubusercontent.com/Moviw/ssh-ls/main/install.sh | sh
 ssh-ls
 ```
 
-也可以使用 [pipx](https://pipx.pypa.io/)：
+脚本用 [uv](https://docs.astral.sh/uv/) 创建独立环境；没装 uv 或 Python 时，会自动安装 uv 和下载 Python 3.11。不需要 sudo、Git，也不用提前装 Python。不会修改 shell 启动文件、SSH 配置或 ssh-ls 设置。如果命令目录不在 PATH 里，安装后会提示完整启动路径。
+
+更新时再运行同一条安装命令即可，安装来源是最新的 `main` 分支。想先检查脚本，可以下载后再执行：
 
 ```sh
+curl -fsSL https://raw.githubusercontent.com/Moviw/ssh-ls/main/install.sh -o install.sh
+less install.sh
+sh install.sh
+```
+
+已经使用 uv 或 pipx 的话，原来的方式也保留，需要 Python 3.11+ 和 Git：
+
+```sh
+uv tool install git+https://github.com/Moviw/ssh-ls.git
+# 或
 pipx install git+https://github.com/Moviw/ssh-ls.git
 ```
 
