@@ -93,4 +93,6 @@ ssh-ls uninstall
 
 欢迎报告问题和提交范围明确的 PR。请附上操作系统、Python 版本，以及可以复现问题的虚构配置或历史样例，不要提交私钥或真实 shell 历史。[开发说明 →](docs/development.md)
 
+---
+
 *Dedicated to my research days in Nakayama Lab.*

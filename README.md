@@ -85,4 +85,6 @@ Interactive launches check GitHub for a newer stable release in the background. 
 
 Bug reports and small, focused pull requests are welcome. Include your OS, Python version, and a fictional config or history example that reproduces the problem—never private keys or real shell history. See the [development guide](docs/development.md).
 
+---
+
 *Dedicated to my research days in Nakayama Lab.*
