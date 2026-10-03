@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ssh-ls"
-version = "0.1.1"
+version = "0.1.2"
 description = "A keyboard-first SSH host picker with config and history discovery"
 readme = "README.md"
 requires-python = ">=3.11"

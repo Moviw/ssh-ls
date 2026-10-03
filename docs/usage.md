@@ -14,7 +14,7 @@
 | `m` | Reorder with `j` / `k` or arrows; `Esc` finishes |
 | `r` | Enter a remote command |
 | `i` | Reload sources |
-| `o` / **Settings** button | Start page, accent color, row spacing, ASCII display |
+| `o` / **Settings** button | Start page, theme, accent color, row spacing, ASCII display |
 | `v` | Effective OpenSSH configuration, after confirmation |
 | `U` | Reset selected host's discovered-field overrides |
 | `H` | Restore hidden discovered hosts |
@@ -30,6 +30,14 @@ Shortcuts are inactive while editing text. Delete/hide and reset operations requ
 The three views are **All**, **Recent**, and **Favorites**. Recent combines connection attempts made in ssh-ls and destinations discovered from shell history. Known timestamps sort newest first; history entries without timestamps remain available at the end. There is no separate History tab.
 
 The default start page is Recent. Open the **Settings** page using its button or `o`, choose your start page, and select **Save**. The choice applies on the next launch; Back or Esc discards changes. Existing favorites and other metadata remain intact.
+
+### Themes
+
+Tokyo Night is the default. Settings includes 10 full dark palettes: Tokyo Night, Dracula, Catppuccin Mocha, Nord, Gruvbox Dark, Rosé Pine, Minimal, Cyberpunk, Ocean, and Retro. Choosing a theme previews its background, panels, text, borders, and status colors immediately. Save keeps the choice for future launches; Back or Esc restores the saved appearance without writing state.
+
+Changing themes selects **Theme default** for the accent, so the preset's colors stay together. You can override the accent afterward. Older settings load as Tokyo Night without rewriting the state file; a previously chosen custom accent is kept. Theme changes don't touch favorites, SSH files, history, or connection behavior.
+
+The UI uses [Textual's native theme system](https://textual.textualize.io/guide/design/). Palettes adapt the named theme colors for this picker; Cyberpunk, Ocean, Minimal, and Retro are ssh-ls presets inspired by those styles.
 
 ![Settings page with startup and appearance preferences](settings.svg)
 

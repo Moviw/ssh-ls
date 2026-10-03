@@ -9,7 +9,7 @@ from pathlib import Path
 from .discovery import discover_config, discover_history
 from .launch import build_argv, effective, validate
 from .models import Host
-from .store import START_TABS, StateError, Store
+from .store import StateError, Store
 
 EDITABLE = ("hostname", "user", "port", "port_explicit", "identities", "jump", "extra_args")
 META = ("label", "favorite", "hidden", "production", "last_used", "uses", "order")
@@ -178,15 +178,7 @@ class Service:
 
     def save_settings(self, settings):
         candidate = {**self.settings, **settings}
-        if candidate.get("row_height") not in (1, 3) or not isinstance(candidate.get("ascii"), bool):
-            raise ValueError("Invalid display settings")
-        accent = candidate.get("accent", "")
-        import re
-        if not isinstance(accent, str) or not re.fullmatch(r"#[0-9a-fA-F]{6}", accent):
-            raise ValueError("Accent must be a six-digit hex color")
-        start_tab = candidate.get("start_tab")
-        if not isinstance(start_tab, str) or start_tab not in START_TABS:
-            raise ValueError("Invalid start tab")
+        Store._validate_settings(candidate)
         if not self.demo:
             if self.state_error:
                 raise StateError(self.state_error)

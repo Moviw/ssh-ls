@@ -8,6 +8,8 @@ import tempfile
 from contextlib import contextmanager
 from pathlib import Path
 
+from .themes import DEFAULT_THEME, THEMES
+
 START_TABS = ("All", "Recent", "Favorites")
 
 
@@ -24,15 +26,17 @@ class Store:
     def _validate_settings(settings):
         if (settings["row_height"] not in (1, 3)
                 or not isinstance(settings["ascii"], bool)
+                or not isinstance(settings["theme"], str)
+                or settings["theme"] not in THEMES
                 or not isinstance(settings["accent"], str)
-                or not re.fullmatch(r"#[0-9a-fA-F]{6}", settings["accent"])
+                or (settings["accent"] != "auto" and not re.fullmatch(r"#[0-9a-fA-F]{6}", settings["accent"]))
                 or not isinstance(settings["start_tab"], str)
                 or settings["start_tab"] not in START_TABS):
             raise ValueError("invalid display settings")
 
     @staticmethod
     def empty():
-        return {"version": 1, "hosts": {}, "settings": {"accent": "#7aa2f7", "row_height": 1, "ascii": False, "start_tab": "Recent"}}
+        return {"version": 1, "hosts": {}, "settings": {"theme": DEFAULT_THEME, "accent": "auto", "row_height": 1, "ascii": False, "start_tab": "Recent"}}
 
     def read(self):
         if not self.path.exists():
@@ -44,6 +48,12 @@ class Store:
             if any(not isinstance(v, dict) for v in data["hosts"].values()):
                 raise ValueError("invalid host record")
             settings = {**self.empty()["settings"], **data.get("settings", {})}
+            # Older releases stored the Tokyo Night accent as a literal. Treat
+            # that exact legacy default as preset-driven, without writing here.
+            if ("theme" not in data.get("settings", {})
+                    and isinstance(settings["accent"], str)
+                    and settings["accent"].lower() == "#7aa2f7"):
+                settings["accent"] = "auto"
             if settings["start_tab"] == "History":
                 settings["start_tab"] = "Recent"
             self._validate_settings(settings)

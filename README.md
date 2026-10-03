@@ -62,7 +62,9 @@ pipx install git+https://github.com/Moviw/ssh-ls.git
 | `?` | Show all shortcuts |
 | `q` | Quit |
 
-The picker opens on **Recent** by default. Click **Settings** or press `o` to choose Recent, Favorites, or All as your start page and adjust accent color, row spacing, and ASCII display.
+The picker opens on **Recent** by default. Click **Settings** or press `o` to choose Recent, Favorites, or All as your start page, pick a theme, and adjust accent color, row spacing, and ASCII display.
+
+Tokyo Night is the default. The theme picker also includes Dracula, Catppuccin Mocha, Nord, Gruvbox Dark, Rosé Pine, Minimal, Cyberpunk, Ocean, and Retro. Preview a theme in Settings, then Save to keep it; Esc discards the preview.
 
 You can also add, edit, clone, hide, and reorder hosts; sort the list; run an explicit remote command; and adjust the accent color or row spacing. [Full controls and CLI options →](docs/usage.md)
 

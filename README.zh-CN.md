@@ -62,7 +62,9 @@ pipx install git+https://github.com/Moviw/ssh-ls.git
 | `?` | 查看全部快捷键 |
 | `q` | 退出 |
 
-默认打开 **Recent**。点击 **Settings** 或按 `o` 进入配置页，可以选择 Recent、Favorites 或 All 作为启动页，也能调整强调色、行距和 ASCII 显示。
+默认打开 **Recent**。点击 **Settings** 或按 `o` 进入配置页，可以选择 Recent、Favorites 或 All 作为启动页，也能选择主题、调整强调色、行距和 ASCII 显示。
+
+主题默认是 Tokyo Night。也预置了 Dracula、Catppuccin Mocha、Nord、Gruvbox Dark、Rosé Pine、Minimal、Cyberpunk、Ocean 和 Retro。在 Settings 中选择即可预览，Save 保存，Esc 放弃预览。
 
 你也可以新增、编辑、复制、隐藏和手动排列主机，调整排序，明确输入一条远程命令，或更换强调色与行距。[完整快捷键与命令行选项 →](docs/usage.md)
 

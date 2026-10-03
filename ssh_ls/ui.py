@@ -17,17 +17,12 @@ from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Container, Horizontal, Vertical, VerticalScroll
 from textual.screen import ModalScreen, Screen
+from textual.theme import Theme
 from textual.widgets import Button, Checkbox, Input, Label, Select, Static, TextArea
 
 from .models import Host, LaunchRequest
 from .store import START_TABS
-
-
-THEME = {
-    "bg": "#1a1b26", "surface": "#24283b", "fg": "#c0caf5", "muted": "#9aa5ce",
-    "border": "#414868", "accent": "#7aa2f7", "purple": "#bb9af7",
-    "warning": "#e0af68", "danger": "#f7768e", "success": "#9ece6a",
-}
+from .themes import DEFAULT_THEME, THEMES, get_palette
 
 
 def _esc(value: Any) -> str:
@@ -92,8 +87,8 @@ class FocusableStatic(Static):
 class ConfirmScreen(ModalScreen[bool]):
     BINDINGS = [Binding("escape", "cancel", "Cancel", priority=True)]
     CSS = """
-    ConfirmScreen { align: center middle; background: #1a1b26 70%; }
-    #confirm-box { width: 70; max-width: 90%; height: auto; max-height: 80%; padding: 1 2; border: round #7aa2f7; background: #24283b; }
+    ConfirmScreen { align: center middle; background: $ssh-bg 70%; }
+    #confirm-box { width: 70; max-width: 90%; height: auto; max-height: 80%; padding: 1 2; border: round $ssh-accent; background: $ssh-surface; }
     #confirm-text { height: auto; margin-bottom: 1; }
     #confirm-buttons { height: 3; align-horizontal: right; }
     #confirm-buttons Button { margin-left: 1; }
@@ -120,8 +115,8 @@ class ConfirmScreen(ModalScreen[bool]):
 class MessageScreen(ModalScreen[None]):
     BINDINGS = [Binding("escape", "cancel", "Close", priority=True)]
     CSS = """
-    MessageScreen { align: center middle; background: #1a1b26 70%; }
-    #message-box { width: 78; max-width: 92%; height: auto; max-height: 85%; padding: 1 2; border: round #7aa2f7; background: #24283b; }
+    MessageScreen { align: center middle; background: $ssh-bg 70%; }
+    #message-box { width: 78; max-width: 92%; height: auto; max-height: 85%; padding: 1 2; border: round $ssh-accent; background: $ssh-surface; }
     #message-body { height: auto; max-height: 60%; overflow-y: auto; margin: 1 0; }
     #message-close { align-horizontal: right; height: 3; }
     """
@@ -146,11 +141,11 @@ class MessageScreen(ModalScreen[None]):
 class HostForm(ModalScreen[dict[str, Any] | None]):
     BINDINGS = [Binding("escape", "cancel", "Cancel", priority=True)]
     CSS = """
-    HostForm { align: center middle; background: #1a1b26 70%; }
-    #form-box { width: 90; max-width: 96%; height: 90%; max-height: 95%; padding: 1 2; border: round #7aa2f7; background: #24283b; }
+    HostForm { align: center middle; background: $ssh-bg 70%; }
+    #form-box { width: 90; max-width: 96%; height: 90%; max-height: 95%; padding: 1 2; border: round $ssh-accent; background: $ssh-surface; }
     #form-fields { height: 1fr; overflow-y: auto; }
     .form-row { height: 3; }
-    .form-label { width: 20; padding-top: 1; color: #9aa5ce; }
+    .form-label { width: 20; padding-top: 1; color: $ssh-muted; }
     .form-input { width: 1fr; }
     #identity-area { height: 5; }
     #form-actions { height: 3; align-horizontal: right; }
@@ -232,8 +227,8 @@ class HostForm(ModalScreen[dict[str, Any] | None]):
 class CommandScreen(ModalScreen[str | None]):
     BINDINGS = [Binding("escape", "cancel", "Cancel", priority=True)]
     CSS = """
-    CommandScreen { align: center middle; background: #1a1b26 70%; }
-    #command-box { width: 78; max-width: 92%; height: auto; padding: 1 2; border: round #7aa2f7; background: #24283b; }
+    CommandScreen { align: center middle; background: $ssh-bg 70%; }
+    #command-box { width: 78; max-width: 92%; height: auto; padding: 1 2; border: round $ssh-accent; background: $ssh-surface; }
     #command-input { margin: 1 0; }
     #command-actions { height: 3; align-horizontal: right; }
     #command-actions Button { margin-left: 1; }
@@ -267,24 +262,26 @@ class CommandScreen(ModalScreen[str | None]):
 class SettingsScreen(Screen[dict[str, Any] | None]):
     BINDINGS = [Binding("escape", "cancel", "Cancel", priority=True)]
     CSS = """
-    SettingsScreen { align: center middle; background: #1a1b26; color: #c0caf5; }
-    #settings-box { width: 68; max-width: 96%; height: 24; max-height: 96%; padding: 1 2; border: round #414868; background: #1a1b26; }
-    #settings-title { height: 1; color: #7aa2f7; text-style: bold; }
-    #settings-description { height: 2; color: #9aa5ce; }
+    SettingsScreen { align: center middle; background: $ssh-bg; color: $ssh-fg; }
+    #settings-box { width: 68; max-width: 96%; height: 30; max-height: 96%; padding: 1 2; border: round $ssh-border; background: $ssh-bg; }
+    #settings-title { height: 1; color: $ssh-accent; text-style: bold; }
+    #settings-description { height: 2; color: $ssh-muted; }
     #settings-fields { height: 1fr; }
+    #theme-preview { height: 2; padding: 0 1; margin-bottom: 0; background: $ssh-surface; }
     .settings-row { height: 3; }
-    .settings-label { width: 22; padding-top: 1; color: #9aa5ce; }
+    .settings-label { width: 22; padding-top: 1; color: $ssh-muted; }
     #settings-actions { height: 3; align-horizontal: right; }
     #settings-actions Button { margin-left: 1; }
-    #settings-hint { height: 1; color: #737aa2; }
-    SettingsScreen SelectCurrent { background: #24283b; color: #c0caf5; border: tall #414868; }
-    SettingsScreen SelectCurrent:focus { border: tall #7aa2f7; }
-    SettingsScreen Checkbox { background: #24283b; color: #c0caf5; border: tall #414868; }
-    SettingsScreen Button { background: #24283b; color: #c0caf5; border: tall #414868; }
-    SettingsScreen Button.-primary { background: #7aa2f7; color: #1a1b26; border: tall #7aa2f7; }
+    #settings-hint { height: 1; color: $ssh-muted; }
+    SettingsScreen SelectCurrent { background: $ssh-surface; color: $ssh-fg; border: tall $ssh-border; }
+    SettingsScreen SelectCurrent:focus { border: tall $ssh-accent; }
+    SettingsScreen Checkbox { background: $ssh-surface; color: $ssh-fg; border: tall $ssh-border; }
+    SettingsScreen Button { background: $ssh-surface; color: $ssh-fg; border: tall $ssh-border; }
+    SettingsScreen Button.-primary { background: $ssh-accent; color: $ssh-bg; border: tall $ssh-accent; }
     """
     def __init__(self, settings: dict[str, Any]):
         super().__init__(); self.settings = settings
+        self._selected_theme = settings.get("theme", DEFAULT_THEME)
 
     def compose(self) -> ComposeResult:
         with Vertical(id="settings-box"):
@@ -292,11 +289,19 @@ class SettingsScreen(Screen[dict[str, Any] | None]):
             yield Static("Choose how ssh-ls opens and looks.", id="settings-description")
             with VerticalScroll(id="settings-fields"):
                 with Horizontal(classes="settings-row"):
+                    yield Label("Theme", classes="settings-label")
+                    yield Select([(p["label"], name) for name, p in THEMES.items()], value=self._selected_theme, id="setting-theme", allow_blank=False)
+                yield Static("", id="theme-preview")
+                with Horizontal(classes="settings-row"):
                     yield Label("Start page", classes="settings-label")
                     yield Select([(x, x) for x in ("Recent", "Favorites", "All")], value=self.settings.get("start_tab", "Recent"), id="setting-start-tab", allow_blank=False)
                 with Horizontal(classes="settings-row"):
                     yield Label("Accent color", classes="settings-label")
-                    yield Select([(x, color) for x, color in (("Blue", "#7aa2f7"), ("Purple", "#bb9af7"), ("Green", "#9ece6a"), ("Cyan", "#7dcfff"), ("Orange", "#e0af68"), ("Pink", "#f7768e"))], value=self.settings.get("accent", "#7aa2f7"), id="setting-accent", allow_blank=False)
+                    options = [("Theme default", "auto"), ("Blue", "#7aa2f7"), ("Purple", "#bb9af7"), ("Green", "#9ece6a"), ("Cyan", "#7dcfff"), ("Orange", "#e0af68"), ("Pink", "#f7768e")]
+                    accent = self.settings.get("accent", "auto")
+                    if accent not in [value for _, value in options]:
+                        options.append(("Custom " + accent, accent))
+                    yield Select(options, value=accent, id="setting-accent", allow_blank=False)
                 with Horizontal(classes="settings-row"):
                     yield Label("Row spacing", classes="settings-label")
                     yield Select([("Compact", 1), ("Comfortable", 3)], value=int(self.settings.get("row_height", 1)), id="setting-row-height", allow_blank=False)
@@ -306,7 +311,34 @@ class SettingsScreen(Screen[dict[str, Any] | None]):
             with Horizontal(id="settings-actions"):
                 yield Button("Back", id="cancel")
                 yield Button("Save", id="save", variant="primary")
-            yield Static("Esc back   ·   Start page applies on next launch", id="settings-hint")
+            yield Static("Esc discards preview   ·   Save keeps your theme", id="settings-hint")
+
+    def on_mount(self) -> None:
+        self._preview_theme()
+
+    @on(Select.Changed, "#setting-theme")
+    @on(Select.Changed, "#setting-accent")
+    def preview_changed(self, event: Select.Changed) -> None:
+        if not self.is_mounted or event.value is Select.BLANK:
+            return
+        if event.select.id == "setting-theme" and event.value != self._selected_theme:
+            self._selected_theme = str(event.value)
+            self.query_one("#setting-accent", Select).value = "auto"
+        self._preview_theme()
+
+    def _preview_theme(self) -> None:
+        settings = {"theme": self.query_one("#setting-theme", Select).value,
+                    "accent": self.query_one("#setting-accent", Select).value}
+        colors = get_palette(settings)
+        self.app._use_theme(settings)
+        preview = Text(colors["label"] + "  ", style="bold " + colors["fg"])
+        for role in ("accent", "purple", "success", "warning", "danger"):
+            preview.append("██ ", style=colors[role])
+        ascii_display = self.settings.get("ascii", False)
+        preview.append("\n" + ("+ Ready  " if ascii_display else "✓ Ready  "), style=colors["success"])
+        preview.append("! Warning  ", style=colors["warning"])
+        preview.append("x Failed" if ascii_display else "× Failed", style=colors["danger"])
+        self.query_one("#theme-preview", Static).update(preview)
 
     def action_cancel(self) -> None: self.dismiss(None)
 
@@ -314,7 +346,8 @@ class SettingsScreen(Screen[dict[str, Any] | None]):
     def pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "cancel": self.dismiss(None)
         elif event.button.id == "save":
-            self.dismiss({"start_tab": self.query_one("#setting-start-tab", Select).value,
+            self.dismiss({"theme": self.query_one("#setting-theme", Select).value,
+                          "start_tab": self.query_one("#setting-start-tab", Select).value,
                           "accent": self.query_one("#setting-accent", Select).value,
                           "row_height": self.query_one("#setting-row-height", Select).value,
                           "ascii": self.query_one("#setting-ascii", Checkbox).value})
@@ -323,8 +356,8 @@ class SettingsScreen(Screen[dict[str, Any] | None]):
 class SortScreen(ModalScreen[str | None]):
     BINDINGS = [Binding("escape", "cancel", "Cancel", priority=True)]
     CSS = """
-    SortScreen { align: center middle; background: #1a1b26 70%; }
-    #sort-box { width: 54; max-width: 90%; height: auto; padding: 1 2; border: round #7aa2f7; background: #24283b; }
+    SortScreen { align: center middle; background: $ssh-bg 70%; }
+    #sort-box { width: 54; max-width: 90%; height: auto; padding: 1 2; border: round $ssh-accent; background: $ssh-surface; }
     #sort-select { margin: 1 0; }
     #sort-actions { height: 3; align-horizontal: right; }
     #sort-actions Button { margin-left: 1; }
@@ -351,36 +384,36 @@ class SSHApp(App[LaunchRequest | None]):
     """Keyboard-first host picker. No SSH launch is performed by this class."""
     TITLE = "ssh-ls"
     CSS = """
-    Screen { background: #1a1b26; color: #c0caf5; }
-    #topline { height: 3; padding: 1; background: #24283b; }
-    #brand { width: 17; color: #7aa2f7; text-style: bold; padding-top: 0; }
+    Screen { background: $ssh-bg; color: $ssh-fg; }
+    #topline { height: 3; padding: 1; background: $ssh-surface; }
+    #brand { width: 17; color: $ssh-accent; text-style: bold; padding-top: 0; }
     #tabs { width: 1fr; height: 1; }
-    #tabs Button { width: 1fr; min-width: 10; height: 1; border: none; padding: 0; background: #24283b; color: #9aa5ce; }
-    #tabs Button:focus { border: none; background: #24283b; padding: 0; }
-    #tabs Button.active { color: #7aa2f7; text-style: bold; border-bottom: none; }
+    #tabs Button { width: 1fr; min-width: 10; height: 1; border: none; padding: 0; background: $ssh-surface; color: $ssh-muted; }
+    #tabs Button:focus { border: none; background: $ssh-surface; padding: 0; }
+    #tabs Button.active { color: $ssh-accent; text-style: bold; border-bottom: none; }
     #tabs Button.active:focus { border: none; border-bottom: none; }
-    #search { width: 28; height: 1; padding: 0 1; border: none; background: #1a1b26; }
-    #open-settings { width: 12; min-width: 10; height: 1; text-wrap: nowrap; text-overflow: ellipsis; border: none; padding: 0 1; color: #9aa5ce; background: #24283b; }
-    #open-settings:focus { border: none; padding: 0 1; color: #7aa2f7; }
+    #search { width: 28; height: 1; padding: 0 1; border: none; background: $ssh-bg; }
+    #open-settings { width: 12; min-width: 10; height: 1; text-wrap: nowrap; text-overflow: ellipsis; border: none; padding: 0 1; color: $ssh-muted; background: $ssh-surface; }
+    #open-settings:focus { border: none; padding: 0 1; color: $ssh-accent; }
     Screen.tiny #open-settings { width: 10; min-width: 10; padding: 0; }
     #main { height: 1fr; }
-    #list-pane { width: 60%; min-width: 32; height: 1fr; border: round #414868; margin: 1 0 1 1; padding: 0 1; }
-    #detail-pane { width: 40%; min-width: 30; height: 1fr; border: round #414868; margin: 1 1 1 0; padding: 1; }
-    #list-caption { height: 3; color: #9aa5ce; padding-top: 1; }
+    #list-pane { width: 60%; min-width: 32; height: 1fr; border: round $ssh-border; margin: 1 0 1 1; padding: 0 1; }
+    #detail-pane { width: 40%; min-width: 30; height: 1fr; border: round $ssh-border; margin: 1 1 1 0; padding: 1; }
+    #list-caption { height: 3; color: $ssh-muted; padding-top: 1; }
     #host-scroll { height: 1fr; overflow-y: auto; }
     #host-list { height: auto; padding: 0 1; text-wrap: nowrap; text-overflow: ellipsis; }
     #details { height: 1fr; overflow-y: auto; }
-    #status { height: 1; padding: 0 2; color: #e0af68; }
-    #context { height: 3; padding: 1 2; background: #24283b; color: #9aa5ce; }
+    #status { height: 1; padding: 0 2; color: $ssh-warning; }
+    #context { height: 3; padding: 1 2; background: $ssh-surface; color: $ssh-muted; }
     #footer-primary { width: 1fr; height: 1; text-wrap: nowrap; text-overflow: ellipsis; }
     #footer-secondary { width: auto; height: 1; margin-left: 3; text-wrap: nowrap; }
-    .selected-row { background: #24283b; color: #c0caf5; text-style: bold; }
-    .normal-row { color: #9aa5ce; }
+    .selected-row { background: $ssh-surface; color: $ssh-fg; text-style: bold; }
+    .normal-row { color: $ssh-muted; }
     .host-line { height: 1; }
-    .warning { color: #e0af68; }
-    .danger { color: #f7768e; }
-    .success { color: #9ece6a; }
-    .muted { color: #9aa5ce; }
+    .warning { color: $ssh-warning; }
+    .danger { color: $ssh-danger; }
+    .success { color: $ssh-success; }
+    .muted { color: $ssh-muted; }
     Screen.narrow #list-pane { width: 1fr; min-width: 30; margin-right: 1; }
     Screen.narrow #detail-pane { display: none; }
     Screen.narrow #brand { width: 12; }
@@ -391,11 +424,10 @@ class SSHApp(App[LaunchRequest | None]):
     Screen.tiny #tabs Button { min-width: 7; }
     Screen.ascii-borders #topline, Screen.ascii-borders #list-pane, Screen.ascii-borders #detail-pane,
     Screen.ascii-borders #confirm-box, Screen.ascii-borders #message-box, Screen.ascii-borders #form-box,
-    Screen.ascii-borders #command-box, Screen.ascii-borders #settings-box, Screen.ascii-borders #sort-box { border: ascii #414868; }
+    Screen.ascii-borders #command-box, Screen.ascii-borders #settings-box, Screen.ascii-borders #sort-box { border: ascii $ssh-border; }
     """
     BINDINGS = [Binding("ctrl+c", "quit", "Quit", priority=True)]
     TABS = START_TABS
-    ACCENTS = {"blue": "#7aa2f7", "purple": "#bb9af7", "green": "#9ece6a", "cyan": "#7dcfff", "orange": "#e0af68", "pink": "#f7768e"}
 
     def __init__(self, service: Any):
         super().__init__()
@@ -414,6 +446,7 @@ class SSHApp(App[LaunchRequest | None]):
         self._move_mode = False
         self._ascii = False
         self.sort_mode = "manual"
+        self._use_theme(getattr(service, "settings", {}) or {})
 
     def compose(self) -> ComposeResult:
         with Horizontal(id="topline"):
@@ -476,34 +509,35 @@ class SSHApp(App[LaunchRequest | None]):
             self.selected = next(i for i, host in enumerate(hosts) if host.id == previous_id)
         else:
             self.selected = min(max(0, self.selected), max(0, len(hosts)-1))
+        colors = self._palette
         warnings = getattr(self.service, "warnings", []) or []
-        warning_badge = f"  [#e0af68]{'?' if self._ascii else '⚠'} {len(warnings)} warnings[/#e0af68]" if warnings else ""
-        self.query_one("#list-caption", Static).update(f"[b]{self.tab}[/b]  [#9aa5ce]{len(hosts)} host{'s' if len(hosts) != 1 else ''}[/#9aa5ce]{warning_badge}")
+        warning_badge = f"  [{colors['warning']}]{'?' if self._ascii else '⚠'} {len(warnings)} warnings[/]" if warnings else ""
+        self.query_one("#list-caption", Static).update(f"[b]{self.tab}[/b]  [{colors['muted']}]{len(hosts)} host{'s' if len(hosts) != 1 else ''}[/]{warning_badge}")
         description = {"All": "Configured, historical and custom hosts", "Recent": "Recently used across sources · newest first", "Favorites": "Your starred hosts"}[self.tab]
         caption = self.query_one("#list-caption", Static)
-        caption.update(str(caption.content) + f"\n[#737aa2]{description}[/#737aa2]")
+        caption.update(str(caption.content) + f"\n[{colors['muted']}]{description}[/]")
         rh = int(getattr(self.service, "settings", {}).get("row_height", 1) or 1)
         lines: list[Text] = []
         name_width = min(24, max((Text(host.label).cell_len for host in hosts), default=8))
         self._ascii = bool(getattr(self.service, "settings", {}).get("ascii", False))
-        accent = str(getattr(self.service, "settings", {}).get("accent", "#7aa2f7"))
+        accent = self._palette["accent"]
         for idx, host in enumerate(hosts):
             star = ("*" if self._ascii else "★") if getattr(host, "favorite", False) else " "
             cursor = (">" if self._ascii else "›") if idx == self.selected else " "
             row = Text()
             row.append(cursor + " ", style=accent)
-            row.append(star + " ", style="#e0af68" if host.favorite else "#9aa5ce")
-            name = Text(host.label, style="bold #c0caf5" if idx == self.selected else "#c0caf5")
+            row.append(star + " ", style=colors["warning"] if host.favorite else colors["muted"])
+            name = Text(host.label, style="bold " + colors["fg"] if idx == self.selected else colors["fg"])
             name.truncate(name_width, overflow="ellipsis", pad=True)
             row.append_text(name)
-            row.append("  " + host.destination + f":{host.port}", style="#9aa5ce")
-            row.append("  (" + _source_label(host) + ")", style="#737aa2")
+            row.append("  " + host.destination + f":{host.port}", style=colors["muted"])
+            row.append("  (" + _source_label(host) + ")", style=colors["muted"])
             if host.production:
-                row.append("  PROD", style="bold #f7768e")
+                row.append("  PROD", style="bold " + colors["danger"])
             lines.extend([row] + [Text("")] * (rh - 1))
         if not hosts:
             hint = "Press ← for All; a to add a host." if self.tab == "Recent" else "Press a to add a host, i to reload."
-            lines = [Text("No hosts in this view.", style="#9aa5ce"), Text(""), Text(hint, style="#9aa5ce")]
+            lines = [Text("No hosts in this view.", style=colors["muted"]), Text(""), Text(hint, style=colors["muted"])]
         self.query_one("#host-list", Static).update(Text("\n").join(lines))
         if hosts:
             self.query_one("#host-scroll", VerticalScroll).scroll_to(y=self.selected * rh, animate=False)
@@ -511,12 +545,10 @@ class SSHApp(App[LaunchRequest | None]):
         self.query_one("#status", Static).update(_esc(self.status))
         self.query_one("#status", Static).display = self.status != "Ready"
         self._update_footer()
-        accent_value = str(getattr(self.service, "settings", {}).get("accent", "#7aa2f7"))
-        accent = self.ACCENTS.get(accent_value, accent_value)
         for i, tab in enumerate(self.TABS):
             button = self.query_one(f"#tab-{i}", Button)
             button.set_classes("active" if tab == self.tab else "")
-            button.styles.color = accent if tab == self.tab else "#9aa5ce"
+            button.styles.color = accent if tab == self.tab else self._palette["muted"]
             button.styles.border_bottom = ("none", "transparent")
 
     def _update_details(self) -> None:
@@ -540,21 +572,35 @@ class SSHApp(App[LaunchRequest | None]):
             preview = " ".join(shlex.quote(str(x)) for x in argv)
         except Exception as exc:
             preview = f"Unavailable: {exc}"
-        details.update("[b]Declared / estimated[/b] [#9aa5ce](not resolved config)[/#9aa5ce]\n" + "\n".join(declared) + "\n\n[b]SSH argv preview[/b]\n[#9aa5ce]" + _esc(preview) + "[/#9aa5ce]\n\n[#9aa5ce]Effective SSH config is never queried until you confirm with v.[/#9aa5ce]")
+        details.update(f"[b]Declared / estimated[/b] [{self._palette['muted']}](not resolved config)[/]\n" + "\n".join(declared) + f"\n\n[b]SSH argv preview[/b]\n[{self._palette['muted']}]" + _esc(preview) + f"[/]\n\n[{self._palette['muted']}]Effective SSH config is never queried until you confirm with v.[/]")
+
+    def _use_theme(self, settings: dict[str, Any]) -> None:
+        self._palette = get_palette(settings)
+        p = self._palette
+        theme_id = settings.get("theme", DEFAULT_THEME)
+        name = f"ssh-ls-{theme_id}-{p['accent'][1:]}"
+        self.register_theme(Theme(
+            name=name, primary=p["accent"], secondary=p["purple"], accent=p["accent"],
+            background=p["bg"], foreground=p["fg"], surface=p["surface"], panel=p["surface"],
+            warning=p["warning"], error=p["danger"], success=p["success"], text_alpha=1,
+            variables={**{f"ssh-{key}": color for key, color in p.items() if key != "label"},
+                       "border": p["border"], "input-selection-background": p["selection"],
+                       "scrollbar": p["border"], "scrollbar-background": p["bg"]},
+        ))
+        self.theme = name
 
     def _apply_settings_style(self) -> None:
         settings = getattr(self.service, "settings", {}) or {}
         self._ascii = bool(settings.get("ascii", False))
-        accent_value = str(settings.get("accent", "#7aa2f7"))
-        accent = self.ACCENTS.get(accent_value, accent_value)
-        # Keep the semantic Tokyo Night palette; only the accent is configurable.
+        self._use_theme(settings)
+        accent = self._palette["accent"]
         self.query_one("#brand", Static).styles.color = accent
         self.screen.add_class("ascii-borders" if settings.get("ascii", False) else "unicode-borders")
         if settings.get("ascii", False): self.screen.remove_class("unicode-borders")
         else: self.screen.remove_class("ascii-borders")
         for i, tab in enumerate(self.TABS):
             b = self.query_one(f"#tab-{i}", Button)
-            b.styles.color = accent if tab == self.tab else "#9aa5ce"
+            b.styles.color = accent if tab == self.tab else self._palette["muted"]
             b.styles.border_bottom = ("none", "transparent")
 
     def _selected_host(self) -> Host | None:
@@ -732,14 +778,18 @@ class SSHApp(App[LaunchRequest | None]):
         self.push_screen(SettingsScreen(settings), self._settings_done)
 
     def _settings_done(self, settings: dict[str, Any] | None) -> None:
-        if settings is None: return
+        if settings is None:
+            self._apply_settings_style(); self._refresh()
+            return
         try:
             self.service.save_settings(settings); self._apply_settings_style(); self._refresh(); self._set_status("Settings saved")
-        except Exception as exc: self.push_screen(MessageScreen("Settings failed", _esc(exc)))
+        except Exception as exc:
+            self._apply_settings_style(); self._refresh()
+            self.push_screen(MessageScreen("Settings failed", _esc(exc)))
 
     def _reload(self) -> None:
         try:
-            self.service.reload(); self._refresh(); self._set_status("Host sources reloaded")
+            self.service.reload(); self._apply_settings_style(); self._refresh(); self._set_status("Host sources reloaded")
         except Exception as exc: self.push_screen(MessageScreen("Reload failed", _esc(exc)))
 
     def _remote_command(self) -> None:
@@ -761,7 +811,7 @@ class SSHApp(App[LaunchRequest | None]):
                 self.exit(self.result)
         if host.production:
             suffix = f"\n\nRemote command: {_esc(command)}" if command else ""
-            self.push_screen(ConfirmScreen("Production connection", f"[#f7768e]Production host:[/#f7768e] {_esc(host.label)} ({_esc(host.destination)}). An SSH command will be handed to the launcher; this UI does not run it directly.{suffix}", "Connect", dangerous=True), finish)
+            self.push_screen(ConfirmScreen("Production connection", f"[{self._palette['danger']}]Production host:[/] {_esc(host.label)} ({_esc(host.destination)}). An SSH command will be handed to the launcher; this UI does not run it directly.{suffix}", "Connect", dangerous=True), finish)
         else:
             finish(True)
 
@@ -839,9 +889,9 @@ class SSHApp(App[LaunchRequest | None]):
     def _update_footer(self) -> None:
         if not self.is_mounted:
             return
-        accent = str(getattr(self.service, "settings", {}).get("accent", "#7aa2f7"))
+        accent = self._palette["accent"]
         def hint(key: str, label: str) -> str:
-            return f"[bold {accent} on #2f334d] {key} [/]  [#c0caf5]{label}[/]"
+            return f"[bold {accent} on {self._palette['selection']}] {key} [/]  [{self._palette['fg']}]{label}[/]"
         if self._move_mode:
             primary = [hint("j/k", "Move"), hint("Esc", "Done")]
         else:
