@@ -1,5 +1,7 @@
 # ssh-ls
 
+*Dedicated to my research days in Nakayama Lab.*
+
 **别再翻历史找那条 SSH 命令了。**
 
 [English](README.md) · [使用说明](docs/usage.md) · [参与开发](docs/development.md)
@@ -7,7 +9,7 @@
 [![CI](https://github.com/Moviw/ssh-ls/actions/workflows/ci.yml/badge.svg)](https://github.com/Moviw/ssh-ls/actions/workflows/ci.yml)
 [![MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-ssh-ls 起于我在 Nakayama Lab 的科研时光。实验室有四台主机（`share1`、`share2`、`share3`、`cal1`），学校还有两台超算，SSH 是每天都要用的工具。我就是懒，想直接选一台，不用反复敲命令、翻历史记录。
+记 SSH 别名、反复敲命令、翻历史记录，很烦。ssh-ls 把 SSH 配置和历史里的主机整理成一个可搜索的列表：选中一台，按下回车，用系统 OpenSSH 连接。
 
 ## 选一台，按回车
 
@@ -77,5 +79,3 @@ pipx install git+https://github.com/Moviw/ssh-ls.git
 ## 参与开发
 
 欢迎报告问题和提交范围明确的 PR。请附上操作系统、Python 版本，以及可以复现问题的虚构配置或历史样例，不要提交私钥或真实 shell 历史。[开发说明 →](docs/development.md)
-
-*献给在 Nakayama Lab 度过的科研时光。*

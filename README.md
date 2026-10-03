@@ -1,5 +1,7 @@
 # ssh-ls
 
+*Dedicated to my research days in Nakayama Lab.*
+
 **Stop digging through shell history for that SSH command.**
 
 [中文](README.zh-CN.md) · [Usage](docs/usage.md) · [Contributing](docs/development.md)
@@ -7,7 +9,7 @@
 [![CI](https://github.com/Moviw/ssh-ls/actions/workflows/ci.yml/badge.svg)](https://github.com/Moviw/ssh-ls/actions/workflows/ci.yml)
 [![MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-ssh-ls grew out of my research days in Nakayama Lab. Between four lab hosts (`share1`, `share2`, `share3`, and `cal1`) and two university supercomputers, I used SSH every day. I wanted to pick a host instead of typing commands or digging through history.
+Remembering SSH aliases and digging through shell history gets old. ssh-ls brings hosts from your SSH config and history into one searchable list: pick a host, press Enter, and connect with native OpenSSH.
 
 ## Pick a host. Press Enter.
 
@@ -77,5 +79,3 @@ You can also add, edit, clone, hide, and reorder hosts; sort the list; run an ex
 ## Contributing
 
 Bug reports and small, focused pull requests are welcome. Include your OS, Python version, and a fictional config or history example that reproduces the problem—never private keys or real shell history. See the [development guide](docs/development.md).
-
-*Dedicated to my research days in Nakayama Lab.*
