@@ -1,16 +1,17 @@
 # ssh-ls
 
+[English](README.md) · 简体中文 · [使用说明](docs/usage.md) · [版本记录](https://github.com/Moviw/ssh-ls/releases) · [参与开发](#参与开发)
+
+[![CI](https://github.com/Moviw/ssh-ls/actions/workflows/ci.yml/badge.svg)](https://github.com/Moviw/ssh-ls/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/Moviw/ssh-ls)](https://github.com/Moviw/ssh-ls/releases/latest)
+[![MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 **别再翻历史找那条 SSH 命令了。**
 
 我就是懒，不想每次自己打 `ssh ...`。连接信息明明已经在 `.ssh/config` 和历史记录里，我想直接选一台，不用再想该敲哪个别名、找哪条命令。
 
 如果你每天都在几台远程机器之间切换，ssh-ls 可以把已有的连接整理成终端里的主机列表。你选中一台，系统的 `ssh` 接着完成连接。
 
-[English](README.md) · [使用说明](docs/usage.md) · [版本记录](https://github.com/Moviw/ssh-ls/releases) · [参与开发](#参与开发)
-
-[![CI](https://github.com/Moviw/ssh-ls/actions/workflows/ci.yml/badge.svg)](https://github.com/Moviw/ssh-ls/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/Moviw/ssh-ls)](https://github.com/Moviw/ssh-ls/releases/latest)
-[![MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 ## 已有的主机，直接选
 
